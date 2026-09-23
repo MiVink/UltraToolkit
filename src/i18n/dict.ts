@@ -1,0 +1,247 @@
+export type Lang = 'uk' | 'en';
+
+const uk = {
+  'nav.tools': 'Інструменти',
+  'nav.about': 'Про сайт',
+  'nav.roadmap': 'У розробці',
+  'motion.full': 'Анімації: повні',
+  'motion.soft': 'Анімації: мʼякі',
+  'motion.off': 'Анімації: вимкнено',
+
+  'hero.eyebrow': '100% у браузері · 0% на сервер',
+  'hero.titleA': 'Файлові інструменти',
+  'hero.titleB': 'без зайвого шуму',
+  'hero.sub': 'Конвертація та стиснення зображень прямо тут. Файли не покидають ваш пристрій.',
+  'hero.cta': 'Обрати інструмент',
+
+  'search.ph': 'Пошук інструментів…',
+  'sec.categories': 'Категорії',
+  'sec.tools': 'Зображення',
+  'sec.toolsLive': 'працює зараз',
+  'empty.other': 'Ця категорія — «{name}». Поки що доступні інструменти зображень нижче.',
+  'empty.search': 'Нічого не знайдено. Спробуйте «png», «jpg» або «стиснення».',
+
+  'cat.image.name': 'Зображення',
+  'cat.image.desc': 'Конвертація та стиснення.',
+  'cat.image.count': '{n} інструменти',
+  'cat.pdf.name': 'PDF',
+  'cat.pdf.desc': 'Злиття та стиснення.',
+  'cat.text.name': 'Текст',
+  'cat.text.desc': 'Markdown та форматування.',
+  'cat.dev.name': 'Розробка',
+  'cat.dev.desc': 'JSON, Base64, хеші.',
+  'cat.media.name': 'Медіа',
+  'cat.media.desc': 'Аудіо та відео.',
+  'soon': 'скоро',
+
+  'badge.hit': 'Хіт',
+  'badge.pro': 'Pro',
+  'badge.svg': 'SVG',
+
+  'tool.png-to-jpg.tag': 'Прозорість → білий фон',
+  'tool.png-to-jpg.desc': 'PNG у компактний JPG. Якість 92%.',
+  'tool.jpg-to-png.tag': 'Без втрат',
+  'tool.jpg-to-png.desc': 'JPG у PNG для подальшого редагування.',
+  'tool.svg-to-png.tag': 'Вектор → растр',
+  'tool.svg-to-png.desc': 'SVG у PNG: 512, 1024 або 2048 px.',
+  'tool.compress.tag': 'До −80% ваги',
+  'tool.compress.desc': 'JPG, PNG, WebP. Якість і формат — на ваш вибір.',
+
+  'card.open': 'Відкрити',
+  'card.close': 'Згорнути',
+
+  'dz.title': 'Перетягніть файл сюди',
+  'dz.titleDrag': 'Відпустіть файл',
+  'dz.action': 'натисніть, щоб обрати',
+  'dz.note': 'Обробка локально, без сервера',
+
+  'ws.hint.png-to-jpg': 'Приймаємо .png до 30 МБ. Прозорість стане білою.',
+  'ws.hint.jpg-to-png': 'Приймаємо .jpg / .jpeg до 30 МБ.',
+  'ws.hint.svg-to-png': 'Приймаємо .svg до 10 МБ. Оберіть ширину нижче.',
+  'ws.hint.compress': 'JPG, PNG або WebP до 30 МБ. Ширше за 3000px — зменшимо автоматично.',
+  'ws.remove': 'Прибрати',
+  'ws.quality': 'Якість',
+  'ws.svgWidth': 'Ширина PNG',
+  'ws.convert': 'Конвертувати',
+  'ws.busy': 'Обробка…',
+  'ws.download': 'Завантажити',
+  'ws.done': 'Готово! Файл створено локально — натисніть «Завантажити».',
+  'ws.unknownType': 'невідомий тип',
+  'ws.meta': '{w}×{h} · {a} → {b}',
+  'ws.saved': '−{p}%',
+  'ws.grew': '+{p}%',
+
+  'err.badPng': 'Це не PNG. Оберіть файл .png',
+  'err.badJpg': 'Це не JPG. Оберіть .jpg або .jpeg',
+  'err.badSvg': 'Це не SVG. Оберіть файл .svg',
+  'err.badImg': 'Підтримуються лише JPG, PNG та WebP.',
+  'err.empty': 'Файл порожній (0 байт).',
+  'err.tooBig': 'Файл завеликий ({size}). Ліміт — {limit} МБ.',
+  'err.badImage': 'Порожнє або некоректне зображення.',
+  'err.canvas': 'Canvas недоступний у цьому браузері.',
+  'err.encode': 'Не вдалося закодувати зображення.',
+  'err.read': 'Не вдалося прочитати файл. Можливо, він пошкоджений.',
+  'err.svgTag': 'Файл не схожий на SVG: немає тега <svg>.',
+  'err.svgRaster': 'Не вдалося растеризувати SVG.',
+  'err.svgBig': 'SVG занадто великий (ліміт 4096px).',
+  'err.noFile': 'Спочатку оберіть файл.',
+  'err.unknown': 'Сталася невідома помилка.',
+
+  'about.title': 'Про сайт',
+  'about.text':
+    'Ultra-Toolkit — статична сторінка без бекенда. Обробка йде через Canvas API прямо у вкладці: файли нікуди не завантажуються, акаунти не потрібні. Легко перевірити — під час конвертації у вкладці Network немає жодного запиту.',
+
+  'road.title': 'У розробці',
+  'road.r1.title': 'PDF: злиття',
+  'road.r1.text': 'Декілька PDF в один файл.',
+  'road.r1.eta': 'Далі',
+  'road.r2.title': 'Текст: Markdown',
+  'road.r2.text': 'Редактор із живим превʼю.',
+  'road.r2.eta': 'У черзі',
+  'road.r3.title': 'Dev: JSON',
+  'road.r3.text': 'Форматування та валідація офлайн.',
+  'road.r3.eta': 'У черзі',
+  'road.r4.title': 'Медіа: WebM → MP4',
+  'road.r4.text': 'Конвертація скрінкастів.',
+  'road.r4.eta': 'Дослідження',
+  'road.r5.title': 'Пакетна обробка',
+  'road.r5.text': 'Десятки файлів за раз + ZIP.',
+  'road.r5.eta': 'Дослідження',
+  'road.r6.title': 'HEIC → JPG',
+  'road.r6.text': 'Фото з iPhone без хмари.',
+  'road.r6.eta': 'Дослідження',
+
+  'foot.lock': 'Файли обробляються лише у вашому браузері',
+  'foot.right': 'Ultra-Toolkit · {year} · MIT',
+};
+
+export type Key = keyof typeof uk;
+
+const en: Record<Key, string> = {
+  'nav.tools': 'Tools',
+  'nav.about': 'About',
+  'nav.roadmap': 'Roadmap',
+  'motion.full': 'Motion: full',
+  'motion.soft': 'Motion: soft',
+  'motion.off': 'Motion: off',
+
+  'hero.eyebrow': '100% in browser · 0% on server',
+  'hero.titleA': 'File tools',
+  'hero.titleB': 'without the noise',
+  'hero.sub': 'Convert and compress images right here. Files never leave your device.',
+  'hero.cta': 'Pick a tool',
+
+  'search.ph': 'Search tools…',
+  'sec.categories': 'Categories',
+  'sec.tools': 'Images',
+  'sec.toolsLive': 'live now',
+  'empty.other': '“{name}” is coming {soon}. Image tools below work right now.',
+  'empty.search': 'Nothing found. Try “png”, “jpg” or “compress”.',
+
+  'cat.image.name': 'Images',
+  'cat.image.desc': 'Convert & compress.',
+  'cat.image.count': '{n} tools',
+  'cat.pdf.name': 'PDF',
+  'cat.pdf.desc': 'Merge & compress.',
+  'cat.text.name': 'Text',
+  'cat.text.desc': 'Markdown & formatting.',
+  'cat.dev.name': 'Dev',
+  'cat.dev.desc': 'JSON, Base64, hashes.',
+  'cat.media.name': 'Media',
+  'cat.media.desc': 'Audio & video.',
+  'soon': 'soon',
+
+  'badge.hit': 'Hot',
+  'badge.pro': 'Pro',
+  'badge.svg': 'SVG',
+
+  'tool.png-to-jpg.tag': 'Transparency → white',
+  'tool.png-to-jpg.desc': 'PNG into a compact JPG. 92% quality.',
+  'tool.jpg-to-png.tag': 'Lossless',
+  'tool.jpg-to-png.desc': 'JPG into PNG for further editing.',
+  'tool.svg-to-png.tag': 'Vector → raster',
+  'tool.svg-to-png.desc': 'SVG into PNG: 512, 1024 or 2048 px.',
+  'tool.compress.tag': 'Up to −80% weight',
+  'tool.compress.desc': 'JPG, PNG, WebP. Quality and format up to you.',
+
+  'card.open': 'Open',
+  'card.close': 'Collapse',
+
+  'dz.title': 'Drop your file here',
+  'dz.titleDrag': 'Release the file',
+  'dz.action': 'click to browse',
+  'dz.note': 'Processed locally, no server',
+
+  'ws.hint.png-to-jpg': 'Accepts .png up to 30 MB. Transparency becomes white.',
+  'ws.hint.jpg-to-png': 'Accepts .jpg / .jpeg up to 30 MB.',
+  'ws.hint.svg-to-png': 'Accepts .svg up to 10 MB. Pick a width below.',
+  'ws.hint.compress': 'JPG, PNG or WebP up to 30 MB. Wider than 3000px gets downscaled.',
+  'ws.remove': 'Remove',
+  'ws.quality': 'Quality',
+  'ws.svgWidth': 'PNG width',
+  'ws.convert': 'Convert',
+  'ws.busy': 'Processing…',
+  'ws.download': 'Download',
+  'ws.done': 'Done! The file was created locally — hit “Download”.',
+  'ws.unknownType': 'unknown type',
+  'ws.meta': '{w}×{h} · {a} → {b}',
+  'ws.saved': '−{p}%',
+  'ws.grew': '+{p}%',
+
+  'err.badPng': 'Not a PNG. Pick a .png file',
+  'err.badJpg': 'Not a JPG. Pick .jpg or .jpeg',
+  'err.badSvg': 'Not an SVG. Pick a .svg file',
+  'err.badImg': 'Only JPG, PNG and WebP are supported.',
+  'err.empty': 'File is empty (0 bytes).',
+  'err.tooBig': 'File is too big ({size}). Limit is {limit} MB.',
+  'err.badImage': 'Empty or invalid image.',
+  'err.canvas': 'Canvas is unavailable in this browser.',
+  'err.encode': 'Failed to encode the image.',
+  'err.read': 'Could not read the file. It may be corrupted.',
+  'err.svgTag': 'Does not look like SVG: no <svg> tag.',
+  'err.svgRaster': 'Failed to rasterize the SVG.',
+  'err.svgBig': 'SVG is too large (4096px limit).',
+  'err.noFile': 'Pick a file first.',
+  'err.unknown': 'Something went wrong.',
+
+  'about.title': 'About',
+  'about.text':
+    'Ultra-Toolkit is a static page with no backend. Processing runs via the Canvas API right in your tab: files are never uploaded, no accounts needed. Easy to verify — the Network tab stays empty during conversion.',
+
+  'road.title': 'Roadmap',
+  'road.r1.title': 'PDF: merge',
+  'road.r1.text': 'Several PDFs into one file.',
+  'road.r1.eta': 'Next',
+  'road.r2.title': 'Text: Markdown',
+  'road.r2.text': 'Editor with live preview.',
+  'road.r2.eta': 'Queued',
+  'road.r3.title': 'Dev: JSON',
+  'road.r3.text': 'Offline formatting & validation.',
+  'road.r3.eta': 'Queued',
+  'road.r4.title': 'Media: WebM → MP4',
+  'road.r4.text': 'Screencast conversion.',
+  'road.r4.eta': 'Research',
+  'road.r5.title': 'Batch mode',
+  'road.r5.text': 'Dozens of files at once + ZIP.',
+  'road.r5.eta': 'Research',
+  'road.r6.title': 'HEIC → JPG',
+  'road.r6.text': 'iPhone photos without the cloud.',
+  'road.r6.eta': 'Research',
+
+  'foot.lock': 'Files are processed only in your browser',
+  'foot.right': 'Ultra-Toolkit · {year} · MIT',
+};
+
+export const STRINGS: Record<Lang, Record<string, string>> = { uk, en };
+
+export function translate(lang: Lang, key: string, vars?: Record<string, string | number>): string {
+  const table: Record<string, string> = STRINGS[lang] ?? STRINGS.uk;
+  const fallback: Record<string, string> = STRINGS.uk;
+  let s = table[key] ?? fallback[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.split(`{${k}}`).join(String(v));
+    }
+  }
+  return s;
+}
