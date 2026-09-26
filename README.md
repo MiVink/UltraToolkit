@@ -5,7 +5,8 @@
 
 - Стек: **React + TypeScript + Vite**, без важких UI-бібліотек, без бекенда.
 - Мови інтерфейсу: **українська (за замовчуванням) + англійська**, перемикач у шапці, вибір зберігається.
-- Готові інструменти (категорія «Зображення»): **PNG → JPG**, **JPG → PNG**, **SVG → PNG**, **Стиснення** (якість + формат JPEG/WebP/PNG).
+- Готові інструменти (категорія «Зображення», уже 6): **PNG → JPG**, **JPG → PNG**, **SVG → PNG**,
+  **Стиснення** (якість + формат), **Зміна розміру** (% або точні px), **Поворот і дзеркало** (з живим превʼю).
 
 ## Швидкий старт
 
@@ -49,12 +50,13 @@ src/
 **1. Опис у конфігу** — `src/config/catalog.ts` (без текстів, тільки технічні поля):
 
 ```ts
-{ id: 'webp-to-png', title: 'WebP → PNG', accept: 'image/webp,.webp', extensions: '.webp', maxSizeMB: 30 }
+{ id: 'webp-to-png', accept: 'image/webp,.webp', extensions: '.webp', maxSizeMB: 30 }
 ```
 
-**2. Рядки в словник** — `src/i18n/dict.ts` (обидві мови, ключі `tool.<id>.tag` / `tool.<id>.desc`, підказка `ws.hint.<id>`):
+**2. Рядки в словник** — `src/i18n/dict.ts` (обидві мови):
 
 ```ts
+'tool.webp-to-png.title': '...',
 'tool.webp-to-png.tag': '...',
 'tool.webp-to-png.desc': '...',
 'ws.hint.webp-to-png': '...',

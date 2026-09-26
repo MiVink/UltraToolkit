@@ -55,7 +55,7 @@ export default function App() {
     const q = query.trim().toLowerCase();
     if (!q) return IMAGE_TOOLS;
     return IMAGE_TOOLS.filter((tool) =>
-      `${tool.title} ${t(`tool.${tool.id}.tag`)} ${t(`tool.${tool.id}.desc`)} ${tool.extensions}`
+      `${t(`tool.${tool.id}.title`)} ${t(`tool.${tool.id}.tag`)} ${t(`tool.${tool.id}.desc`)} ${tool.extensions}`
         .toLowerCase()
         .includes(q),
     );
@@ -70,6 +70,8 @@ export default function App() {
       <div className="aurora a" aria-hidden="true" />
       <div className="aurora b" aria-hidden="true" />
       <div className="aurora c" aria-hidden="true" />
+      <div className="beam" aria-hidden="true" />
+      <div className="sweep" aria-hidden="true" />
       {/* EASTER-EGG: <CursorParticles motion={motion} /> */}
       <div className="bg-grain" aria-hidden="true" />
 

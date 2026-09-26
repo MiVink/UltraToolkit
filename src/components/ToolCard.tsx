@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ToolMeta } from '../config/catalog';
+import { isRasterFile } from '../config/catalog';
 import Dropzone from './Dropzone';
 import { useLang } from '../i18n/lang';
 import {
@@ -10,6 +11,9 @@ import {
   downloadBlob,
   errorCode,
   formatBytes,
+  probeImage,
+  resizeImage,
+  transformImage,
   type CompressFormat,
   type ProcessResult,
 } from '../tools/images';
@@ -19,6 +23,8 @@ const GLYPHS: Record<string, string> = {
   'jpg-to-png': 'JP',
   'svg-to-png': 'SV',
   compress: 'CQ',
+  resize: 'RZ',
+  rotate: 'RT',
 };
 
 type Phase = 'idle' | 'ready' | 'busy' | 'done';
@@ -32,13 +38,12 @@ export default function ToolCard({ tool, open, onToggle }: { tool: ToolMeta; ope
           {GLYPHS[tool.id] ?? 'UT'}
         </span>
         <div>
-          <h3>{tool.title}</h3>
+          <h3>{t(`tool.${tool.id}.title`)}</h3>
           <div className="tool-tagline">{t(`tool.${tool.id}.tag`)}</div>
         </div>
       </div>
       <p className="tool-desc">{t(`tool.${tool.id}.desc`)}</p>
       <div className="tool-foot">
-        {tool.badge && <span className={`chip${tool.badge === 'hit' ? ' hot' : ''}`}>{t(`badge.${tool.badge}`)}</span>}
         <span className="chip">{tool.extensions}</span>
         <button className="tool-open-btn" onClick={onToggle} aria-expanded={open}>
           {open ? t('card.close') : t('card.open')}
@@ -58,9 +63,22 @@ function Workspace({ tool }: { tool: ToolMeta }) {
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
 
+  // compress
   const [quality, setQuality] = useState(0.8);
   const [format, setFormat] = useState<CompressFormat>('image/jpeg');
+  // svg
   const [svgSize, setSvgSize] = useState(1024);
+  // resize
+  const [orig, setOrig] = useState<{ w: number; h: number } | null>(null);
+  const [pct, setPct] = useState(50);
+  const [custom, setCustom] = useState(false);
+  const [cw, setCw] = useState(800);
+  const [ch, setCh] = useState(600);
+  const [lock, setLock] = useState(true);
+  // rotate
+  const [deg, setDeg] = useState<0 | 90 | 180 | 270>(0);
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
 
   useEffect(() => {
     if (!file) {
@@ -87,6 +105,10 @@ function Workspace({ tool }: { tool: ToolMeta }) {
     setResult(null);
     setError(null);
     setPhase('idle');
+    setOrig(null);
+    setDeg(0);
+    setFlipH(false);
+    setFlipV(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tool.id, lang]);
 
@@ -124,11 +146,7 @@ function Workspace({ tool }: { tool: ToolMeta }) {
       setFile(null);
       return;
     }
-    if (
-      tool.id === 'compress' &&
-      !['image/jpeg', 'image/png', 'image/webp'].includes(f.type) &&
-      !/\.(jpe?g|png|webp)$/.test(name)
-    ) {
+    if ((tool.id === 'compress' || tool.id === 'resize' || tool.id === 'rotate') && !isRasterFile(f)) {
       setError(fail('badImg'));
       setFile(null);
       return;
@@ -136,6 +154,28 @@ function Workspace({ tool }: { tool: ToolMeta }) {
     setError(null);
     setFile(f);
     setPhase('ready');
+    if (tool.id === 'resize') {
+      setOrig(null);
+      probeImage(f)
+        .then((d) => {
+          setOrig(d);
+          setCw(Math.max(1, Math.round((d.w * pct) / 100)));
+          setCh(Math.max(1, Math.round((d.h * pct) / 100)));
+        })
+        .catch(() => setOrig(null));
+    }
+  };
+
+  const outW = orig ? (custom ? cw : Math.max(1, Math.round((orig.w * pct) / 100))) : 0;
+  const outH = orig ? (custom ? ch : Math.max(1, Math.round((orig.h * pct) / 100))) : 0;
+
+  const onCw = (v: number) => {
+    setCw(v);
+    if (lock && orig && orig.w > 0) setCh(Math.max(1, Math.round((v * orig.h) / orig.w)));
+  };
+  const onCh = (v: number) => {
+    setCh(v);
+    if (lock && orig && orig.h > 0) setCw(Math.max(1, Math.round((v * orig.w) / orig.h)));
   };
 
   const run = async () => {
@@ -152,7 +192,17 @@ function Workspace({ tool }: { tool: ToolMeta }) {
       if (tool.id === 'png-to-jpg') out = await convertPngToJpg(file);
       else if (tool.id === 'jpg-to-png') out = await convertJpgToPng(file);
       else if (tool.id === 'svg-to-png') out = await convertSvgToPng(file, svgSize);
-      else out = await compressImage(file, quality, format);
+      else if (tool.id === 'resize') {
+        let dims = orig;
+        if (!dims) dims = await probeImage(file);
+        const w = custom ? cw : Math.max(1, Math.round((dims.w * pct) / 100));
+        const h = custom ? ch : Math.max(1, Math.round((dims.h * pct) / 100));
+        const fmt: CompressFormat =
+          file.type === 'image/png' ? 'image/png' : file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+        out = await resizeImage(file, { width: w, height: h, format: fmt, quality: 0.9 });
+      } else if (tool.id === 'rotate') {
+        out = await transformImage(file, { rotate: deg, flipH, flipV });
+      } else out = await compressImage(file, quality, format);
       setResult(out);
       setPhase('done');
     } catch (e) {
@@ -168,7 +218,7 @@ function Workspace({ tool }: { tool: ToolMeta }) {
       <Dropzone accept={tool.accept} extensions={tool.extensions} onFile={handleFile} />
       <div className="status busy">{t(`ws.hint.${tool.id}`)}</div>
 
-      {file && preview && (
+      {file && preview && tool.id !== 'rotate' && (
         <div className="file-row">
           {tool.id === 'svg-to-png' ? (
             <span className="tool-glyph" aria-hidden="true" style={{ width: 44, height: 44 }}>
@@ -181,6 +231,7 @@ function Workspace({ tool }: { tool: ToolMeta }) {
             <div className="fname">{file.name}</div>
             <div className="fsize">
               {formatBytes(file.size, lang)} · {file.type || t('ws.unknownType')}
+              {tool.id === 'resize' && orig && ` · ${orig.w}×${orig.h}px`}
             </div>
           </div>
           <button
@@ -196,49 +247,136 @@ function Workspace({ tool }: { tool: ToolMeta }) {
         </div>
       )}
 
-      {(tool.id === 'compress' || tool.id === 'svg-to-png') && (
-        <div className="controls">
-          {tool.id === 'compress' && (
-            <>
-              <div className="slider-row">
-                <label>
-                  {t('ws.quality')} <b>{Math.round(quality * 100)}%</b>
-                </label>
-                <input
-                  type="range"
-                  min={10}
-                  max={100}
-                  value={Math.round(quality * 100)}
-                  onChange={(e) => setQuality(Number(e.target.value) / 100)}
-                  aria-label={t('ws.quality')}
-                />
-              </div>
-              <div className="seg" role="group" aria-label="format">
-                {(
-                  [
-                    ['image/jpeg', 'JPEG'],
-                    ['image/webp', 'WebP'],
-                    ['image/png', 'PNG'],
-                  ] as [CompressFormat, string][]
-                ).map(([v, label]) => (
-                  <button key={v} className={format === v ? 'on' : ''} onClick={() => setFormat(v)}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          {tool.id === 'svg-to-png' && (
-            <div className="seg" role="group" aria-label={t('ws.svgWidth')}>
-              {[512, 1024, 2048].map((s) => (
-                <button key={s} className={svgSize === s ? 'on' : ''} onClick={() => setSvgSize(s)}>
-                  {s}px
+      {file && preview && tool.id === 'rotate' && (
+        <div className="preview-big">
+          <img
+            src={preview}
+            alt={file.name}
+            style={{ transform: `rotate(${deg}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
+          />
+          <div className="fname">{file.name} · {formatBytes(file.size, lang)}</div>
+        </div>
+      )}
+
+      <div className="controls">
+        {tool.id === 'compress' && (
+          <>
+            <div className="slider-row">
+              <label>
+                {t('ws.quality')} <b>{Math.round(quality * 100)}%</b>
+              </label>
+              <input
+                type="range"
+                min={10}
+                max={100}
+                value={Math.round(quality * 100)}
+                onChange={(e) => setQuality(Number(e.target.value) / 100)}
+                aria-label={t('ws.quality')}
+              />
+            </div>
+            <div className="seg" role="group" aria-label="format">
+              {(
+                [
+                  ['image/jpeg', 'JPEG'],
+                  ['image/webp', 'WebP'],
+                  ['image/png', 'PNG'],
+                ] as [CompressFormat, string][]
+              ).map(([v, label]) => (
+                <button key={v} className={format === v ? 'on' : ''} onClick={() => setFormat(v)}>
+                  {label}
                 </button>
               ))}
             </div>
-          )}
-        </div>
-      )}
+          </>
+        )}
+
+        {tool.id === 'svg-to-png' && (
+          <div className="seg" role="group" aria-label={t('ws.svgWidth')}>
+            {[512, 1024, 2048].map((s) => (
+              <button key={s} className={svgSize === s ? 'on' : ''} onClick={() => setSvgSize(s)}>
+                {s}px
+              </button>
+            ))}
+          </div>
+        )}
+
+        {tool.id === 'resize' && (
+          <>
+            <div className="seg" role="group" aria-label={t('ws.scale')}>
+              {[25, 50, 75].map((p) => (
+                <button
+                  key={p}
+                  className={!custom && pct === p ? 'on' : ''}
+                  onClick={() => {
+                    setCustom(false);
+                    setPct(p);
+                    if (orig) {
+                      setCw(Math.max(1, Math.round((orig.w * p) / 100)));
+                      setCh(Math.max(1, Math.round((orig.h * p) / 100)));
+                    }
+                  }}
+                >
+                  {p}%
+                </button>
+              ))}
+              <button className={custom ? 'on' : ''} onClick={() => setCustom(true)}>
+                {t('ws.exact')}
+              </button>
+            </div>
+            {custom && (
+              <div className="num-grid">
+                <label className="field">
+                  {t('ws.width')}
+                  <input
+                    type="number"
+                    min={1}
+                    max={8000}
+                    value={cw}
+                    onChange={(e) => onCw(Math.max(1, Number(e.target.value) || 1))}
+                  />
+                </label>
+                <label className="field">
+                  {t('ws.height')}
+                  <input
+                    type="number"
+                    min={1}
+                    max={8000}
+                    value={ch}
+                    onChange={(e) => onCh(Math.max(1, Number(e.target.value) || 1))}
+                  />
+                </label>
+                <label className="check">
+                  <input type="checkbox" checked={lock} onChange={(e) => setLock(e.target.checked)} />
+                  {t('ws.lock')}
+                </label>
+              </div>
+            )}
+            {orig && outW > 0 && <div className="status busy">{t('ws.outSize', { w: outW, h: outH })}</div>}
+          </>
+        )}
+
+        {tool.id === 'rotate' && (
+          <div className="seg" role="group" aria-label={t(`tool.${tool.id}.title`)}>
+            <button onClick={() => setDeg(((deg + 270) % 360) as 0 | 90 | 180 | 270)}>{t('ws.rotL')}</button>
+            <button onClick={() => setDeg(((deg + 90) % 360) as 0 | 90 | 180 | 270)}>{t('ws.rotR')}</button>
+            <button className={flipH ? 'on' : ''} onClick={() => setFlipH((v) => !v)}>
+              {t('ws.flipH')}
+            </button>
+            <button className={flipV ? 'on' : ''} onClick={() => setFlipV((v) => !v)}>
+              {t('ws.flipV')}
+            </button>
+            <button
+              onClick={() => {
+                setDeg(0);
+                setFlipH(false);
+                setFlipV(false);
+              }}
+            >
+              {t('ws.reset')}
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="action-row">
         <button

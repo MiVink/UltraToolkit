@@ -238,8 +238,101 @@ export async function compressImage(file: File, quality: number, format: Compres
   };
 }
 
-export function downloadBlob(blob: Blob, fileName: string): void {
-  const url = URL.createObjectURL(blob);
+/** Швидко дізнатися розміри растра без повної обробки. */
+export async function probeImage(file: File): Promise<{ w: number; h: number }> {
+  const img = await loadImageFromFile(file);
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) throw err('badImage');
+  return { w, h };
+}
+
+function keepFormat(file: File): CompressFormat {
+  if (file.type === 'image/png' || /\.png$/i.test(file.name)) return 'image/png';
+  if (file.type === 'image/webp' || /\.webp$/i.test(file.name)) return 'image/webp';
+  return 'image/jpeg';
+}
+
+export interface ResizeOpts {
+  width: number;
+  height: number;
+  format: CompressFormat;
+  quality?: number;
+}
+
+export async function resizeImage(file: File, opts: ResizeOpts): Promise<ProcessResult> {
+  const okType =
+    ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name);
+  if (!okType) throw err('badImg');
+  const w = Math.round(opts.width);
+  const h = Math.round(opts.height);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1 || w > 8000 || h > 8000) {
+    throw err('badImage');
+  }
+  const img = await loadImageFromFile(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = ctx2d(canvas);
+  if (opts.format === 'image/jpeg') drawCover(ctx, img, w, h, '#ffffff');
+  else drawCover(ctx, img, w, h);
+  const blob = await canvasToBlob(canvas, opts.format, opts.format === 'image/png' ? undefined : (opts.quality ?? 0.9));
+  const ext = opts.format === 'image/jpeg' ? 'jpg' : opts.format === 'image/webp' ? 'webp' : 'png';
+  return {
+    blob,
+    fileName: replaceExt(file.name, ext),
+    width: w,
+    height: h,
+    sizeBefore: file.size,
+    sizeAfter: blob.size,
+    mime: opts.format,
+  };
+}
+
+export interface TransformOpts {
+  rotate: 0 | 90 | 180 | 270;
+  flipH: boolean;
+  flipV: boolean;
+}
+
+export async function transformImage(file: File, o: TransformOpts): Promise<ProcessResult> {
+  const okType =
+    ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name);
+  if (!okType) throw err('badImg');
+  const img = await loadImageFromFile(file);
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) throw err('badImage');
+  const format = keepFormat(file);
+  const swap = o.rotate === 90 || o.rotate === 270;
+  const canvas = document.createElement('canvas');
+  canvas.width = swap ? h : w;
+  canvas.height = swap ? w : h;
+  const ctx = ctx2d(canvas);
+  if (format === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(((o.rotate % 360) * Math.PI) / 180);
+  ctx.scale(o.flipH ? -1 : 1, o.flipV ? -1 : 1);
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  const blob = await canvasToBlob(canvas, format, format === 'image/png' ? undefined : 0.92);
+  const ext = format === 'image/jpeg' ? 'jpg' : format === 'image/webp' ? 'webp' : 'png';
+  return {
+    blob,
+    fileName: replaceExt(file.name, ext),
+    width: canvas.width,
+    height: canvas.height,
+    sizeBefore: file.size,
+    sizeAfter: blob.size,
+    mime: format,
+  };
+}
+
+export function downloadBlob(blob: Blob, fileName: string): void {  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = fileName;

@@ -1,2 +1,30 @@
+# deps / build
 node_modules/
 dist/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# vite / ts
+.vite/
+*.tsbuildinfo
+
+# env (тут бекенда немає, але хай буде)
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
