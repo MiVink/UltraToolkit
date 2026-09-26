@@ -1,25 +1,12 @@
-import type { MotionIntensity } from '../config/catalog';
 import { useLang } from '../i18n/lang';
 
-const MOTION_KEY: Record<MotionIntensity, string> = {
-  full: 'motion.full',
-  soft: 'motion.soft',
-  off: 'motion.off',
-};
-
-export default function Header({
-  motion,
-  onToggleMotion,
-}: {
-  motion: MotionIntensity;
-  onToggleMotion: () => void;
-}) {
+export default function Header() {
   const { lang, setLang, t } = useLang();
 
   return (
     <header className="header">
       <div className="wrap header-inner">
-        <a className="logo" href="#top" aria-label="Ultra-Toolkit — на початок">
+        <a className="logo" href="#top" aria-label="Ultra-Toolkit">
           <span className="logo-mark" aria-hidden="true">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
               <path
@@ -47,10 +34,6 @@ export default function Header({
             EN
           </button>
         </div>
-        <button className="motion-btn" onClick={onToggleMotion} title={t(MOTION_KEY[motion])}>
-          <span className="motion-dot" aria-hidden="true" />
-          {t(MOTION_KEY[motion])}
-        </button>
       </div>
     </header>
   );

@@ -57,13 +57,24 @@ export default function CategoryGrid({
   active: string;
   onSelect: (id: string) => void;
 }) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const toolsCount = (n: number): string => {
+    if (lang !== 'uk') return t('cat.image.count', { n });
+    const m10 = n % 10;
+    const m100 = n % 100;
+    const w =
+      m10 === 1 && m100 !== 11
+        ? 'інструмент'
+        : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)
+          ? 'інструменти'
+          : 'інструментів';
+    return `${n} ${w}`;
+  };
   return (
     <div className="cat-grid" role="list">
       {categories.map((c) => {
         const soon = c.status === 'soon';
-        const count =
-          c.id === 'image' ? t('cat.image.count', { n: IMAGE_TOOLS.length }) : t('soon');
+        const count = c.id === 'image' ? toolsCount(IMAGE_TOOLS.length) : t('soon');
         return (
           <button
             key={c.id}

@@ -4,18 +4,22 @@ import { useLang } from '../i18n/lang';
 interface Props {
   accept: string;
   extensions: string;
-  onFile: (file: File) => void;
+  multiple?: boolean;
+  onFile?: (file: File) => void;
+  onFiles?: (files: File[]) => void;
 }
 
 /** Універсальна зона завантаження: drag-and-drop + клік + клавіатура. */
-export default function Dropzone({ accept, extensions, onFile }: Props) {
+export default function Dropzone({ accept, extensions, multiple, onFile, onFiles }: Props) {
   const { t } = useLang();
   const inputRef = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
   const counter = useRef(0);
 
   const pick = (files: FileList | null) => {
-    if (files && files.length > 0) onFile(files[0]);
+    if (!files || files.length === 0) return;
+    if (multiple && onFiles) onFiles(Array.from(files));
+    else onFile?.(files[0]);
   };
 
   return (
@@ -59,6 +63,7 @@ export default function Dropzone({ accept, extensions, onFile }: Props) {
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         hidden
         onChange={(e) => {
           pick(e.target.files);

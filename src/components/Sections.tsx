@@ -1,4 +1,4 @@
-import { ROADMAP_IDS } from '../config/catalog';
+import { NEXT_IDS } from '../config/catalog';
 import { useLang } from '../i18n/lang';
 
 export function About() {
@@ -11,23 +11,25 @@ export function About() {
   );
 }
 
-export function Roadmap() {
+export function Next() {
   const { t } = useLang();
   return (
-    <section id="roadmap" className="roadmap">
+    <section className="next">
       <div className="section-head">
         <span className="idx">03</span>
-        <h2>{t('road.title')}</h2>
+        <h2>{t('next.title')}</h2>
       </div>
-      <div className="road-grid">
-        {ROADMAP_IDS.map((id) => (
-          <div key={id} className="road-card">
-            <h3>{t(`road.${id}.title`)}</h3>
-            <p>{t(`road.${id}.text`)}</p>
-            <span className="eta">◌ {t(`road.${id}.eta`)}</span>
-          </div>
+      <ul className="next-list">
+        {NEXT_IDS.map((id) => (
+          <li key={id}>
+            <span className="next-dot" aria-hidden="true" />
+            <div>
+              <b>{t(`next.${id}.title`)}</b>
+              <span>{t(`next.${id}.text`)}</span>
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }

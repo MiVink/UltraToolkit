@@ -3,41 +3,17 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import CategoryGrid from './components/CategoryGrid';
 import ToolCard from './components/ToolCard';
-// EASTER-EGG: ефект частинок за курсором — поки вимкнено, увімкнути пізніше як пасхалку.
-// import CursorParticles from './components/CursorParticles';
-import { About, Footer, Roadmap } from './components/Sections';
-import { CATEGORIES, IMAGE_TOOLS, type MotionIntensity } from './config/catalog';
+import { About, Footer, Next } from './components/Sections';
+import { IMAGE_TOOLS, visibleCategories } from './config/catalog';
 import { useLang } from './i18n/lang';
-
-function initialMotion(): MotionIntensity {
-  try {
-    const saved = localStorage.getItem('ut-motion') as MotionIntensity | null;
-    if (saved === 'full' || saved === 'soft' || saved === 'off') return saved;
-  } catch {
-    /* ignore */
-  }
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return 'soft';
-  return 'full';
-}
 
 export default function App() {
   const { t } = useLang();
-  const [motion, setMotion] = useState<MotionIntensity>(initialMotion);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('image');
   const [openId, setOpenId] = useState<string | null>('compress');
 
   useEffect(() => {
-    document.documentElement.dataset.motion = motion;
-    try {
-      localStorage.setItem('ut-motion', motion);
-    } catch {
-      /* ignore */
-    }
-  }, [motion]);
-
-  useEffect(() => {
-    if (motion === 'off') return;
     const els = Array.from(document.querySelectorAll('.reveal'));
     if (!('IntersectionObserver' in window)) {
       els.forEach((el) => el.classList.add('in'));
@@ -49,7 +25,7 @@ export default function App() {
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [motion, category, query]);
+  }, [category, query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -61,22 +37,16 @@ export default function App() {
     );
   }, [query, t]);
 
-  const toggleMotion = () => setMotion((m) => (m === 'full' ? 'soft' : m === 'soft' ? 'off' : 'full'));
+  const cats = visibleCategories();
 
   return (
     <>
       <div className="bg-stage" aria-hidden="true" />
       <div className="bg-grid" aria-hidden="true" />
-      <div className="aurora a" aria-hidden="true" />
-      <div className="aurora b" aria-hidden="true" />
-      <div className="aurora c" aria-hidden="true" />
-      <div className="beam" aria-hidden="true" />
-      <div className="sweep" aria-hidden="true" />
-      {/* EASTER-EGG: <CursorParticles motion={motion} /> */}
       <div className="bg-grain" aria-hidden="true" />
 
       <div id="top">
-        <Header motion={motion} onToggleMotion={toggleMotion} />
+        <Header />
       </div>
 
       <main className="wrap">
@@ -103,7 +73,7 @@ export default function App() {
             <span className="idx">01</span>
             <h2>{t('sec.categories')}</h2>
           </div>
-          <CategoryGrid categories={CATEGORIES} active={category} onSelect={setCategory} />
+          <CategoryGrid categories={cats} active={category} onSelect={setCategory} />
         </section>
 
         <section style={{ marginTop: 26 }}>
@@ -131,7 +101,7 @@ export default function App() {
           <About />
         </div>
         <div className="reveal">
-          <Roadmap />
+          <Next />
         </div>
       </main>
 

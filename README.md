@@ -1,12 +1,14 @@
 # Ultra-Toolkit
 
-Каталог браузерних інструментів для роботи з файлами.
-Усе обробляється **лише локально у браузері** (Canvas API, Blob URL) — жоден байт не відправляється на сервер.
+Статичний local-first інструментарій для обробки файлів прямо у браузері.
+Усе працює **лише локально** (Canvas API, Blob URL) — жоден байт не відправляється на сервер. Тільки файли з пристрою користувача: жодних завантажувачів з YouTube/TikTok за URL.
 
 - Стек: **React + TypeScript + Vite**, без важких UI-бібліотек, без бекенда.
-- Мови інтерфейсу: **українська (за замовчуванням) + англійська**, перемикач у шапці, вибір зберігається.
-- Готові інструменти (категорія «Зображення», уже 6): **PNG → JPG**, **JPG → PNG**, **SVG → PNG**,
-  **Стиснення** (якість + формат), **Зміна розміру** (% або точні px), **Поворот і дзеркало** (з живим превʼю).
+- Мови інтерфейсу: **українська (за замовчуванням) + англійська**, перемикач у шапці.
+- Категорія «Зображення», 11 робочих інструментів: **PNG → JPG**, **JPG → PNG**, **SVG → PNG**,
+  **Стиснення зображення**, **Зміна розміру**, **Поворот і віддзеркалення**,
+  **Чистка метаданих** (EXIF/GPS/XMP), **Обрізка** (1:1, 16:9, 9:16),
+  **Конвертер WebP**, **Пакетна обробка**, **Генератор favicon** (ICO + PNG).
 
 ## Швидкий старт
 
@@ -22,7 +24,7 @@ npm run preview  # перегляд продакшн-збірки
 ## Деплой на GitHub Pages (автоматичний)
 
 1. Залити проєкт у репозиторій GitHub (гілка `main`).
-2. У `vite.config.ts` вже стоїть `base: './'` — сайт працюватиме і на `<user>.github.io/<repo>/`, і на кастомному домені.
+2. У `vite.config.ts` вже стоїть `base: './'`.
 3. Workflow `.github/workflows/deploy.yml` сам збирає (`npm run build`) і публікує `dist/` при кожному пуші в `main`.
 4. У налаштуваннях репозиторію: **Settings → Pages → Source: GitHub Actions**.
 
@@ -30,51 +32,38 @@ npm run preview  # перегляд продакшн-збірки
 
 ```
 src/
-  config/catalog.ts        # категорії та інструменти БЕЗ текстів (тексти — в i18n)
+  config/catalog.ts        # інструменти (без текстів) + видимі категорії + «Наступне»
   i18n/dict.ts             # усі рядки UK/EN
-  i18n/lang.tsx            # LangProvider, useLang(), збереження мови
-  tools/images.ts          # локальна обробка (помилки — кодами ERR:<code>)
+  i18n/lang.tsx            # LangProvider, useLang()
+  tools/
+    images.ts              # конвертація, стиснення, ресайз, поворот, обрізка
+    metadata.ts            # пошук EXIF/GPS/XMP/ICC + чистка перекодуванням
+    favicon.ts             # збірка .ico (16/32/48) + PNG-сет
   components/
-    Header.tsx             # логотип, навігація, мова, перемикач анімацій
-    Hero.tsx               # короткий hero-блок
-    CategoryGrid.tsx       # картки категорій
-    ToolCard.tsx           # універсальна картка інструмента + робоча зона
-    Dropzone.tsx           # універсальна drag-and-drop зона
-    CursorParticles.tsx    # ВИМКНЕНО (заготовка під пасхалку, див. App.tsx)
-    Sections.tsx           # Про сайт, roadmap, footer
-  styles/global.css        # тема, аврора-фон, картки, адаптив
+    ToolCard.tsx           # картка + РЕЄСТР воркспейсів (id → компонент)
+    Dropzone.tsx           # drag-and-drop (single + multiple)
+    workspaces/
+      shell.tsx            # useJob() + FileRow/ResultView/RunBar/Seg
+      basic.tsx            # прості конвертери
+      geometry.tsx         # ресайз, поворот, обрізка (+Cropper)
+      advanced.tsx         # метадані, пакетна, favicon
 ```
 
 ## Як додати новий інструмент
 
-**1. Опис у конфігу** — `src/config/catalog.ts` (без текстів, тільки технічні поля):
+**1. Конфіг** — `src/config/catalog.ts`:
 
 ```ts
-{ id: 'webp-to-png', accept: 'image/webp,.webp', extensions: '.webp', maxSizeMB: 30 }
+{ id: 'my-tool', accept: 'image/png,.png', extensions: '.png', maxSizeMB: 30 }
 ```
 
-**2. Рядки в словник** — `src/i18n/dict.ts` (обидві мови):
+**2. Словник** — `src/i18n/dict.ts` (обидві мови): `tool.<id>.title/.tag/.desc` + `ws.hint.<id>`.
 
-```ts
-'tool.webp-to-png.title': '...',
-'tool.webp-to-png.tag': '...',
-'tool.webp-to-png.desc': '...',
-'ws.hint.webp-to-png': '...',
-```
+**3. Обробка** — новий файл у `src/tools/` (помилки кидати як `throw err('код')`, текст підтягнеться з `err.<код>`).
 
-**3. Функція обробки** — `src/tools/images.ts` (помилки кидати як `throw err('код')`, текст підтягнеться з `err.<код>`):
+**4. Воркспейс** — компонент на `useJob()` + віджетах із `shell.tsx`, один рядок у реєстрі `WORKSPACES` в `ToolCard.tsx`.
 
-```ts
-export async function convertWebpToPng(file: File): Promise<ProcessResult> { ... }
-```
-
-**4. Гілка в `ToolCard.tsx`**, у функції `run()`:
-
-```tsx
-else if (tool.id === 'webp-to-png') out = await convertWebpToPng(file);
-```
-
-Dropzone, превʼю, помилки, прогрес і кнопка завантаження — вже універсальні.
+Нова категорія зʼявляється на головній лише з першим робочим інструментом (`status: 'ready'` + `visibleCategories()`).
 
 ## Приватність
 

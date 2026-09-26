@@ -43,8 +43,7 @@ export function replaceExt(name: string, newExt: string): string {
   return `${base || 'image'}.${newExt}`;
 }
 
-function loadImageFromFile(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+export function loadImageFromFile(file: File): Promise<HTMLImageElement> {  return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
@@ -60,8 +59,7 @@ function loadImageFromFile(file: File): Promise<HTMLImageElement> {
   });
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {
-  return new Promise((resolve, reject) => {
+export function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {  return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (blob) resolve(blob);
@@ -247,12 +245,6 @@ export async function probeImage(file: File): Promise<{ w: number; h: number }> 
   return { w, h };
 }
 
-function keepFormat(file: File): CompressFormat {
-  if (file.type === 'image/png' || /\.png$/i.test(file.name)) return 'image/png';
-  if (file.type === 'image/webp' || /\.webp$/i.test(file.name)) return 'image/webp';
-  return 'image/jpeg';
-}
-
 export interface ResizeOpts {
   width: number;
   height: number;
@@ -326,6 +318,98 @@ export async function transformImage(file: File, o: TransformOpts): Promise<Proc
     fileName: replaceExt(file.name, ext),
     width: canvas.width,
     height: canvas.height,
+    sizeBefore: file.size,
+    sizeAfter: blob.size,
+    mime: format,
+  };
+}
+
+/** Формат виходу = формат входу (растр), інакше JPEG. */
+export function keepFormat(file: File): CompressFormat {
+  if (file.type === 'image/png' || /\.png$/i.test(file.name)) return 'image/png';
+  if (file.type === 'image/webp' || /\.webp$/i.test(file.name)) return 'image/webp';
+  return 'image/jpeg';
+}
+
+/** Намалювати картинку на полотно 1:1 і закодувати. JPEG заливається білим. */
+export async function renderToBlob(
+  img: HTMLImageElement,
+  w: number,
+  h: number,
+  format: CompressFormat,
+  quality = 0.92,
+): Promise<Blob> {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = ctx2d(canvas);
+  if (format === 'image/jpeg') drawCover(ctx, img, w, h, '#ffffff');
+  else drawCover(ctx, img, w, h);
+  return canvasToBlob(canvas, format, format === 'image/png' ? undefined : quality);
+}
+
+/** Універсальна конвертація растра в заданий формат без зміни розмірів. */
+export async function convertGeneric(file: File, format: CompressFormat, quality = 0.9): Promise<ProcessResult> {
+  const okType =
+    ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name);
+  if (!okType) throw err('badImg');
+  const img = await loadImageFromFile(file);
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) throw err('badImage');
+  if (w > 8000 || h > 8000) throw err('tooLarge');
+  const blob = await renderToBlob(img, w, h, format, quality);
+  const ext = format === 'image/jpeg' ? 'jpg' : format === 'image/webp' ? 'webp' : 'png';
+  return {
+    blob,
+    fileName: replaceExt(file.name, ext),
+    width: w,
+    height: h,
+    sizeBefore: file.size,
+    sizeAfter: blob.size,
+    mime: format,
+  };
+}
+
+export interface CropRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Вирізати прямокутник (у пікселях оригіналу) і закодувати у форматі входу. */
+export async function cropImage(file: File, r: CropRect): Promise<ProcessResult> {
+  const okType =
+    ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name);
+  if (!okType) throw err('badImg');
+  const img = await loadImageFromFile(file);
+  const iw = img.naturalWidth || img.width;
+  const ih = img.naturalHeight || img.height;
+  const x = Math.max(0, Math.round(r.x));
+  const y = Math.max(0, Math.round(r.y));
+  const w = Math.min(iw - x, Math.round(r.w));
+  const h = Math.min(ih - y, Math.round(r.h));
+  if (!iw || !ih || w < 1 || h < 1) throw err('badImage');
+  const format = keepFormat(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = ctx2d(canvas);
+  if (format === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+  }
+  ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
+  const blob = await canvasToBlob(canvas, format, format === 'image/png' ? undefined : 0.92);
+  const ext = format === 'image/jpeg' ? 'jpg' : format === 'image/webp' ? 'webp' : 'png';
+  const dot = file.name.lastIndexOf('.');
+  const base = (dot > 0 ? file.name.slice(0, dot) : file.name || 'image') + '-crop';
+  return {
+    blob,
+    fileName: `${base}.${ext}`,
+    width: w,
+    height: h,
     sizeBefore: file.size,
     sizeAfter: blob.size,
     mime: format,

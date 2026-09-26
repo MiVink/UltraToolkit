@@ -1,7 +1,16 @@
-export type MotionIntensity = 'full' | 'soft' | 'off';
-
 export interface ToolMeta {
-  id: 'png-to-jpg' | 'jpg-to-png' | 'svg-to-png' | 'compress' | 'resize' | 'rotate';
+  id:
+    | 'png-to-jpg'
+    | 'jpg-to-png'
+    | 'svg-to-png'
+    | 'compress'
+    | 'resize'
+    | 'rotate'
+    | 'metadata'
+    | 'crop'
+    | 'webp'
+    | 'batch'
+    | 'favicon';
   /** accept для <input type=file> */
   accept: string;
   /** людиночитабельні розширення */
@@ -17,11 +26,14 @@ export interface CategoryMeta {
 
 export const CATEGORIES: CategoryMeta[] = [
   { id: 'image', icon: 'image', status: 'ready' },
-  { id: 'pdf', icon: 'pdf', status: 'soon' },
-  { id: 'text', icon: 'text', status: 'soon' },
-  { id: 'dev', icon: 'code', status: 'soon' },
-  { id: 'media', icon: 'media', status: 'soon' },
+  // Нові категорії зʼявляються тут лише з першим робочим інструментом.
+  // Зарезервовано: pdf, text, dev, media.
 ];
+
+/** Категорії, в яких уже є робочі інструменти, — лише вони показуються на головній. */
+export function visibleCategories(): CategoryMeta[] {
+  return CATEGORIES.filter((c) => c.status === 'ready');
+}
 
 const RASTER = 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
 
@@ -33,19 +45,22 @@ export const IMAGE_TOOLS: ToolMeta[] = [
   { id: 'compress', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
   { id: 'resize', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
   { id: 'rotate', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
+  { id: 'metadata', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
+  { id: 'crop', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
+  { id: 'webp', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
+  { id: 'batch', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
+  { id: 'favicon', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
 ];
 
-/** Тексти — у словнику i18n (road.<id>.title / .text / .eta) */
-export const ROADMAP_IDS = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'] as const;
+/** Чесно наступне (після реалізації поточного набору). Максимум 3 пункти. */
+export const NEXT_IDS = ['zip', 'heic', 'pdf'] as const;
 
 export function getTool(id: string): ToolMeta | undefined {
   return IMAGE_TOOLS.find((t) => t.id === id);
 }
 
-/** Чи це растрове фото (jpeg/png/webp) — для compress/resize/rotate. */
+/** Чи це растрове фото (jpeg/png/webp) — для convert/resize/rotate/… */
 export function isRasterFile(f: File): boolean {
   const name = f.name.toLowerCase();
-  return (
-    ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || /\.(jpe?g|png|webp)$/.test(name)
-  );
+  return ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || /\.(jpe?g|png|webp)$/.test(name);
 }
