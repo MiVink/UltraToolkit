@@ -25,7 +25,7 @@ export default function App() {
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [category, query]);
+  }, [category, query, openId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -38,6 +38,9 @@ export default function App() {
   }, [query, t]);
 
   const cats = visibleCategories();
+  // З одначною категорією сітка з 5 колонок виглядає як поломка —
+  // показуємо її лише коли категорій принаймні дві.
+  const showCats = cats.length > 1;
 
   return (
     <>
@@ -52,45 +55,53 @@ export default function App() {
       <main className="wrap">
         <Hero />
 
-        <div className="toolbar">
-          <label className="search">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" stroke="#4ade80" strokeWidth="2" />
-              <path d="m16.5 16.5 4 4" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              type="search"
-              placeholder={t('search.ph')}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label={t('search.ph')}
-            />
-          </label>
-        </div>
+        {showCats && (
+          <section id="categories">
+            <div className="section-head">
+              <span className="idx" aria-hidden="true">01</span>
+              <h2>{t('sec.categories')}</h2>
+            </div>
+            <CategoryGrid categories={cats} active={category} onSelect={setCategory} />
+          </section>
+        )}
 
-        <section id="tools">
+        <section id="tools" style={showCats ? { marginTop: 26 } : undefined}>
           <div className="section-head">
-            <span className="idx">01</span>
-            <h2>{t('sec.categories')}</h2>
-          </div>
-          <CategoryGrid categories={cats} active={category} onSelect={setCategory} />
-        </section>
-
-        <section style={{ marginTop: 26 }}>
-          <div className="section-head">
-            <span className="idx">02</span>
+            <span className="idx" aria-hidden="true">{showCats ? '02' : '01'}</span>
             <h2>{t('sec.tools')}</h2>
             <p>{t('sec.toolsLive')}</p>
           </div>
-          {category !== 'image' ? (
-            <div className="empty">{t('empty.other', { name: t(`cat.${category}.name`), soon: t('soon') })}</div>
-          ) : filtered.length === 0 ? (
+
+          <div className="toolbar">
+            <label className="search">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="#4ade80" strokeWidth="2" />
+                <path d="m16.5 16.5 4 4" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <input
+                type="search"
+                placeholder={t('search.ph')}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label={t('search.ph')}
+              />
+            </label>
+          </div>
+
+          {filtered.length === 0 ? (
             <div className="empty">{t('empty.search')}</div>
           ) : (
             <div className="tools-grid">
               {filtered.map((tool) => (
-                <div key={tool.id} className="reveal in">
-                  <ToolCard tool={tool} open={openId === tool.id} onToggle={() => setOpenId((v) => (v === tool.id ? null : tool.id))} />
+                <div
+                  key={tool.id}
+                  className={`reveal in${openId === tool.id ? ' expanded' : ''}`}
+                >
+                  <ToolCard
+                    tool={tool}
+                    open={openId === tool.id}
+                    onToggle={() => setOpenId((v) => (v === tool.id ? null : tool.id))}
+                  />
                 </div>
               ))}
             </div>
@@ -101,7 +112,7 @@ export default function App() {
           <About />
         </div>
         <div className="reveal">
-          <Next />
+          <Next idx={showCats ? '03' : '02'} />
         </div>
       </main>
 

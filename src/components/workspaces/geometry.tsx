@@ -24,16 +24,20 @@ export function ResizeWS({ tool }: { tool: ToolMeta }) {
   const [ch, setCh] = useState(600);
   const [lock, setLock] = useState(true);
   const [orig, setOrig] = useState<{ w: number; h: number } | null>(null);
+  // Гонка: якщо файл замінили під час probe, відповідь попереднього — ігноруємо
+  const probeId = useRef(0);
 
   const j = useJob(rasterCheck, tool.maxSizeMB, (f) => {
     setOrig(null);
+    const id = ++probeId.current;
     probeImage(f)
       .then((d) => {
+        if (id !== probeId.current) return;
         setOrig(d);
         setCw(Math.max(1, Math.round((d.w * pct) / 100)));
         setCh(Math.max(1, Math.round((d.h * pct) / 100)));
       })
-      .catch(() => setOrig(null));
+      .catch(() => id === probeId.current && setOrig(null));
   });
 
   const outW = orig ? (custom ? cw : Math.max(1, Math.round((orig.w * pct) / 100))) : 0;
@@ -57,6 +61,7 @@ export function ResizeWS({ tool }: { tool: ToolMeta }) {
           meta={`${formatBytes(j.file.size, j.lang)} · ${orig ? `${orig.w}×${orig.h}px` : '…'}`}
           thumb={j.preview}
           onRemove={() => {
+            probeId.current++;
             j.clearFile();
             setOrig(null);
           }}

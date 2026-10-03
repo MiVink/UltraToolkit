@@ -11,12 +11,12 @@ export function About() {
   );
 }
 
-export function Next() {
+export function Next({ idx = '03' }: { idx?: string }) {
   const { t } = useLang();
   return (
     <section className="next">
       <div className="section-head">
-        <span className="idx">03</span>
+        <span className="idx" aria-hidden="true">{idx}</span>
         <h2>{t('next.title')}</h2>
       </div>
       <ul className="next-list">

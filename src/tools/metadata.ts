@@ -1,7 +1,7 @@
 /* Пошук службових даних (EXIF, GPS, XMP, ICC…) у JPEG/PNG/WebP
    та їх видалення перекодуванням через Canvas. Усе локально. */
 
-import { keepFormat, loadImageFromFile, renderToBlob, type ProcessResult } from './images';
+import { assertImageSize, keepFormat, loadImageFromFile, renderToBlob, type ProcessResult } from './images';
 
 function err(code: string): Error {
   return new Error(`ERR:${code}`);
@@ -120,7 +120,9 @@ function inspectWebp(view: DataView, len: number): string[] {
 
 /** Повертає ключі словника знайдених службових даних (порожньо = файл чистий). */
 export async function inspectImage(file: File): Promise<string[]> {
-  const head = await file.slice(0, 1 << 20).arrayBuffer();
+  // Читаємо весь файл (до 30 МБ за лімітом UI): перші 1 МБ — це хибно-чисті
+  // вердикти для PNG/WebP з чанками після мегабайта.
+  const head = await file.arrayBuffer();
   const view = new DataView(head);
   const len = head.byteLength;
   if (len >= 2 && view.getUint16(0) === 0xffd8) return inspectJpeg(view, len);
@@ -141,6 +143,7 @@ export async function stripMetadata(file: File, findings: string[]): Promise<Pro
   const w = img.naturalWidth || img.width;
   const h = img.naturalHeight || img.height;
   if (!w || !h) throw err('badImage');
+  assertImageSize(w, h);
   const format = keepFormat(file);
   const blob = await renderToBlob(img, w, h, format, 0.92);
   const dot = file.name.lastIndexOf('.');

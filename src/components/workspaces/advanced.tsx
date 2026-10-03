@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ToolMeta } from '../../config/catalog';
 import { isRasterFile } from '../../config/catalog';
 import { useLang } from '../../i18n/lang';
@@ -27,15 +27,19 @@ export function MetadataWS({ tool }: { tool: ToolMeta }) {
   const [findings, setFindings] = useState<string[] | null>(null);
   const [scanning, setScanning] = useState(false);
   const [removed, setRemoved] = useState<number | null>(null);
+  // Лічильник сканувань: захищає від гонки, коли файл замінили під час аналізу
+  // (інакше вердикт «чистий» може стосуватися попереднього файлу).
+  const scanId = useRef(0);
 
   const j = useJob(rasterCheck, tool.maxSizeMB, (f) => {
     setFindings(null);
     setRemoved(null);
     setScanning(true);
+    const id = ++scanId.current;
     inspectImage(f)
-      .then((r) => setFindings(r))
-      .catch(() => j.fail('read'))
-      .finally(() => setScanning(false));
+      .then((r) => id === scanId.current && setFindings(r))
+      .catch(() => id === scanId.current && j.fail('read'))
+      .finally(() => id === scanId.current && setScanning(false));
   });
 
   const run = () =>
@@ -54,6 +58,7 @@ export function MetadataWS({ tool }: { tool: ToolMeta }) {
           meta={`${formatBytes(j.file.size, j.lang)} · ${j.file.type || j.t('ws.unknownType')}`}
           thumb={j.preview}
           onRemove={() => {
+            scanId.current++;
             j.clearFile();
             setFindings(null);
             setRemoved(null);
@@ -162,6 +167,13 @@ export function BatchWS({ tool }: { tool: ToolMeta }) {
   const [maxSide, setMaxSide] = useState(0);
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<{ ok: number; total: number } | null>(null);
+  const [prog, setProg] = useState<{ ok: number; total: number } | null>(null);
+
+  // Дзеркало рядків для прибирання object URL при розмонтуванні
+  // (воркспейс розмонтується при згорнутті картки — без цього URL-и течуть).
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  useEffect(() => () => rowsRef.current.forEach((r) => URL.revokeObjectURL(r.url)), []);
 
   const patch = (id: number, p: Partial<BatchRow>) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)));
 
@@ -194,7 +206,9 @@ export function BatchWS({ tool }: { tool: ToolMeta }) {
     if (pending.length === 0 || busy) return;
     setBusy(true);
     setSummary(null);
+    setProg({ ok: 0, total: pending.length });
     let ok = 0;
+    let processed = 0;
     for (const r of pending) {
       patch(r.id, { status: 'busy' });
       try {
@@ -209,6 +223,8 @@ export function BatchWS({ tool }: { tool: ToolMeta }) {
       } catch {
         patch(r.id, { status: 'error' });
       }
+      processed++;
+      setProg({ ok: processed, total: pending.length });
     }
     setBusy(false);
     setSummary({ ok, total: pending.length });
@@ -292,7 +308,9 @@ export function BatchWS({ tool }: { tool: ToolMeta }) {
               {t('ws.remove')}
             </button>
           </div>
-          <div className="status busy">{t('ws.batchNote')}</div>
+          <div className="status busy">
+            {busy && prog ? t('ws.batchProgress', prog) : t('ws.batchNote')}
+          </div>
           {summary && (
             <div className="status ok">{t('ws.batchDone', { ok: summary.ok, n: summary.total })}</div>
           )}

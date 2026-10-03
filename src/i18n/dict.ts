@@ -106,7 +106,7 @@ const uk = {
   'ws.downloadAll': 'Завантажити все',
   'ws.batchNote': 'Браузер може запитати дозвіл на множинне завантаження.',
   'ws.batchDone': 'Готово: {ok} з {n}',
-  'ws.stWait': 'Очікує',
+  'ws.batchProgress': 'Оброблено {ok} з {n}…',
   'ws.stBusy': 'Обробка…',
   'ws.stErr': 'Помилка',
 
@@ -275,7 +275,7 @@ const en: Record<Key, string> = {
   'ws.downloadAll': 'Download all',
   'ws.batchNote': 'The browser may ask permission for multiple downloads.',
   'ws.batchDone': 'Done: {ok} of {n}',
-  'ws.stWait': 'Queued',
+  'ws.batchProgress': 'Processed {ok} of {n}…',
   'ws.stBusy': 'Working…',
   'ws.stErr': 'Error',
 
