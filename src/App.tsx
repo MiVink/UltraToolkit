@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import CategoryGrid from './components/CategoryGrid';
 import ToolCard from './components/ToolCard';
+import ToolModal from './components/ToolModal';
 import { About, Footer, Next } from './components/Sections';
-import { IMAGE_TOOLS, visibleCategories } from './config/catalog';
+import { IMAGE_TOOLS, visibleCategories, type ToolMeta } from './config/catalog';
 import { useLang } from './i18n/lang';
 
 export default function App() {
   const { t } = useLang();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('image');
-  const [openId, setOpenId] = useState<string | null>('compress');
+  const [activeTool, setActiveTool] = useState<ToolMeta | null>(null);
 
   useEffect(() => {
     const els = Array.from(document.querySelectorAll('.reveal'));
@@ -25,7 +26,9 @@ export default function App() {
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [category, query, openId]);
+  }, [category, query]);
+
+  const closeModal = useCallback(() => setActiveTool(null), []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -46,6 +49,7 @@ export default function App() {
     <>
       <div className="bg-stage" aria-hidden="true" />
       <div className="bg-grid" aria-hidden="true" />
+      <div className="bg-vignette" aria-hidden="true" />
       <div className="bg-grain" aria-hidden="true" />
 
       <div id="top">
@@ -69,7 +73,6 @@ export default function App() {
           <div className="section-head">
             <span className="idx" aria-hidden="true">{showCats ? '02' : '01'}</span>
             <h2>{t('sec.tools')}</h2>
-            <p>{t('sec.toolsLive')}</p>
           </div>
 
           <div className="toolbar">
@@ -93,15 +96,8 @@ export default function App() {
           ) : (
             <div className="tools-grid">
               {filtered.map((tool) => (
-                <div
-                  key={tool.id}
-                  className={`reveal in${openId === tool.id ? ' expanded' : ''}`}
-                >
-                  <ToolCard
-                    tool={tool}
-                    open={openId === tool.id}
-                    onToggle={() => setOpenId((v) => (v === tool.id ? null : tool.id))}
-                  />
+                <div className="reveal in" key={tool.id}>
+                  <ToolCard tool={tool} onOpen={() => setActiveTool(tool)} />
                 </div>
               ))}
             </div>
@@ -117,6 +113,8 @@ export default function App() {
       </main>
 
       <Footer />
+
+      {activeTool && <ToolModal tool={activeTool} onClose={closeModal} />}
     </>
   );
 }

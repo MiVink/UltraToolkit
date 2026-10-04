@@ -13,7 +13,6 @@ const uk = {
   'search.ph': 'Пошук інструментів…',
   'sec.categories': 'Категорії',
   'sec.tools': 'Зображення',
-  'sec.toolsLive': 'працює зараз',
   'empty.other': 'Ця категорія — «{name}». Поки що доступні інструменти зображень нижче.',
   'empty.search': 'Нічого не знайдено. Спробуйте «png», «jpg» або «стиснення».',
 
@@ -66,6 +65,7 @@ const uk = {
 
   'card.open': 'Відкрити',
   'card.close': 'Згорнути',
+  'modal.close': 'Закрити',
 
   'dz.title': 'Перетягніть файл сюди',
   'dz.titleDrag': 'Відпустіть файл',
@@ -182,7 +182,6 @@ const en: Record<Key, string> = {
   'search.ph': 'Search tools…',
   'sec.categories': 'Categories',
   'sec.tools': 'Images',
-  'sec.toolsLive': 'live now',
   'empty.other': '“{name}” is coming {soon}. Image tools below work right now.',
   'empty.search': 'Nothing found. Try “png”, “jpg” or “compress”.',
 
@@ -235,6 +234,7 @@ const en: Record<Key, string> = {
 
   'card.open': 'Open',
   'card.close': 'Collapse',
+  'modal.close': 'Close',
 
   'dz.title': 'Drop your file here',
   'dz.titleDrag': 'Release the file',
