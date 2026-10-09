@@ -1,120 +1,170 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import Header from './components/Header';
-import Hero from './components/Hero';
-import CategoryGrid from './components/CategoryGrid';
-import ToolCard from './components/ToolCard';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
 import ToolModal from './components/ToolModal';
-import { About, Footer, Next } from './components/Sections';
-import { IMAGE_TOOLS, visibleCategories, type ToolMeta } from './config/catalog';
+import HomeView from './views/HomeView';
+import ToolView from './views/ToolView';
+import { FavoritesView, RecentView } from './views/ListsView';
+import { getTool, type ToolMeta } from './config/catalog';
 import { useLang } from './i18n/lang';
+import { setContextTool } from './state/history';
+import { go, useFavorites, useRoute } from './state/store';
+import { PendingProvider, usePendingState } from './state/pending';
 
 export default function App() {
   const { t } = useLang();
+  const route = useRoute();
+  const { favs, has, toggle } = useFavorites();
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('image');
-  const [activeTool, setActiveTool] = useState<ToolMeta | null>(null);
+  const [category, setCategory] = useState('all');
+  const [quick, setQuick] = useState<ToolMeta | null>(null);
 
+  const pending = usePendingState();
+  const setPending = pending.set;
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+
+  const tool = route.name === 'tool' ? (getTool(route.id) ?? null) : null;
+
+  // Історія підписує завантаження інструментом, який відкритий зараз:
+  // сторінка має пріоритет, потім модалка швидкого режиму.
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll('.reveal'));
-    if (!('IntersectionObserver' in window)) {
-      els.forEach((el) => el.classList.add('in'));
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add('in')),
-      { threshold: 0.12 },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [category, query]);
+    setContextTool(tool?.id ?? quick?.id ?? '');
+  }, [tool, quick]);
 
-  const closeModal = useCallback(() => setActiveTool(null), []);
+  /**
+   * Перетягування файлів над усією сторінкою — як на Convertio:
+   * 1) `dragover` обов'язково скасовується, інакше браузер відкриє файл замість сторінки;
+   * 2) лічильник входу/виходу (а не «ми просто зараз у зоні») — бо `dragover` б'є
+   *    по кожному елементу під курсором і не має пари з `dragleave`;
+   * 3) скидання в будь-якому місці головної потрапляє в чергу, а не тільки в дропзону.
+   */
+  useEffect(() => {
+    const onEnter = (e: DragEvent) => {
+      e.preventDefault();
+      dragDepth.current++;
+      setDragging(true);
+    };
+    const onLeave = () => {
+      dragDepth.current = Math.max(0, dragDepth.current - 1);
+      if (dragDepth.current === 0) setDragging(false);
+    };
+    const onOver = (e: DragEvent) => e.preventDefault();
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      const files = e.dataTransfer?.files;
+      // лише на головній: на сторінці інструмента про чергу вже подбав Dropzone
+      const atHome = window.location.hash.replace(/^#\/?/, '') === '';
+      if (files && files.length > 0 && atHome) setPending(Array.from(files).slice(0, 20));
+    };
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return IMAGE_TOOLS;
-    return IMAGE_TOOLS.filter((tool) =>
-      `${t(`tool.${tool.id}.title`)} ${t(`tool.${tool.id}.tag`)} ${t(`tool.${tool.id}.desc`)} ${tool.extensions}`
-        .toLowerCase()
-        .includes(q),
-    );
-  }, [query, t]);
+    window.addEventListener('dragenter', onEnter);
+    window.addEventListener('dragleave', onLeave);
+    window.addEventListener('dragover', onOver);
+    window.addEventListener('drop', onDrop);
+    return () => {
+      window.removeEventListener('dragenter', onEnter);
+      window.removeEventListener('dragleave', onLeave);
+      window.removeEventListener('dragover', onOver);
+      window.removeEventListener('drop', onDrop);
+    };
+  }, [setPending]);
 
-  const cats = visibleCategories();
-  // З одначною категорією сітка з 5 колонок виглядає як поломка —
-  // показуємо її лише коли категорій принаймні дві.
-  const showCats = cats.length > 1;
+  const openTool = useCallback((t: ToolMeta) => go(`/tool/${t.id}`), []);
+  const closeQuick = useCallback(() => setQuick(null), []);
+
+  const navActive: 'all' | 'recent' | 'favorites' =
+    route.name === 'recent' ? 'recent' : route.name === 'favorites' ? 'favorites' : 'all';
+  const tabActive: 'tools' | 'recent' | 'favorites' =
+    route.name === 'recent' ? 'recent' : route.name === 'favorites' ? 'favorites' : 'tools';
 
   return (
-    <>
+    <PendingProvider api={pending}>
       <div className="bg-stage" aria-hidden="true" />
-      <div className="bg-grid" aria-hidden="true" />
       <div className="bg-vignette" aria-hidden="true" />
       <div className="bg-grain" aria-hidden="true" />
 
-      <div id="top">
-        <Header />
-      </div>
+      <div className="app">
+        <Sidebar
+          active={navActive}
+          category={category}
+          onCategory={setCategory}
+          onNavigate={go}
+        />
 
-      <main className="wrap">
-        <Hero />
+        <div className="app-main">
+          <TopBar active={tabActive} query={query} onQuery={setQuery} />
 
-        {showCats && (
-          <section id="categories">
-            <div className="section-head">
-              <span className="idx" aria-hidden="true">01</span>
-              <h2>{t('sec.categories')}</h2>
-            </div>
-            <CategoryGrid categories={cats} active={category} onSelect={setCategory} />
-          </section>
-        )}
-
-        <section id="tools" style={showCats ? { marginTop: 26 } : undefined}>
-          <div className="section-head">
-            <span className="idx" aria-hidden="true">{showCats ? '02' : '01'}</span>
-            <h2>{t('sec.tools')}</h2>
-          </div>
-
-          <div className="toolbar">
-            <label className="search">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" stroke="#4ade80" strokeWidth="2" />
-                <path d="m16.5 16.5 4 4" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <input
-                type="search"
-                placeholder={t('search.ph')}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-label={t('search.ph')}
+          <main className="content" id="about">
+            {route.name === 'home' && (
+              <HomeView
+                route={route}
+                query={query}
+                onQuery={setQuery}
+                category={category}
+                onCategory={setCategory}
+                onOpenTool={openTool}
+                hasFav={has}
+                onFav={toggle}
               />
-            </label>
-          </div>
+            )}
 
-          {filtered.length === 0 ? (
-            <div className="empty">{t('empty.search')}</div>
-          ) : (
-            <div className="tools-grid">
-              {filtered.map((tool) => (
-                <div className="reveal in" key={tool.id}>
-                  <ToolCard tool={tool} onOpen={() => setActiveTool(tool)} />
+            {route.name === 'tool' &&
+              (tool ? (
+                <ToolView
+                  tool={tool}
+                  fav={has(tool.id)}
+                  onFav={() => toggle(tool.id)}
+                  onQuick={() => setQuick(tool)}
+                />
+              ) : (
+                <div className="empty">
+                  <b>{t('tool.notFound')}</b>
+                  <span>{t('tool.notFoundSub')}</span>
+                  <button type="button" className="btn btn-ghost" onClick={() => go('/')}>
+                    {t('nav.all')}
+                  </button>
                 </div>
               ))}
-            </div>
-          )}
-        </section>
 
-        <div className="reveal">
-          <About />
+            {route.name === 'recent' && <RecentView />}
+
+            {route.name === 'favorites' && (
+              <FavoritesView favs={favs} hasFav={has} onFav={toggle} onOpenTool={openTool} />
+            )}
+          </main>
         </div>
-        <div className="reveal">
-          <Next idx={showCats ? '03' : '02'} />
+      </div>
+
+      {quick && <ToolModal tool={quick} onClose={closeQuick} />}
+
+      {dragging && (
+        <div className="drop-veil" aria-hidden="true">
+          <div className="drop-veil-box">
+            <span className="drop-veil-ico">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <b>{t('dz.dropHere')}</b>
+            <span>{t('dz.dropHint')}</span>
+          </div>
         </div>
-      </main>
-
-      <Footer />
-
-      {activeTool && <ToolModal tool={activeTool} onClose={closeModal} />}
-    </>
+      )}
+    </PendingProvider>
   );
 }

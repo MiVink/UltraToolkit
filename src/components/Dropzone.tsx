@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLang } from '../i18n/lang';
+import { usePending } from '../state/pending';
 
 interface Props {
   accept: string;
@@ -9,18 +10,37 @@ interface Props {
   onFiles?: (files: File[]) => void;
 }
 
-/** Універсальна зона завантаження: drag-and-drop + клік + клавіатура. */
+/**
+ * Універсальна зона завантаження: drag-and-drop + клік + клавіатура.
+ *
+ * Окрім прямого вибору файлу, підхоплює чергу з головної сторінки: користувач
+ * кинув файл там, обрав інструмент — і тут він вже готовий до роботи, без
+ * повторного вибору (саме так працює Convertio).
+ */
 export default function Dropzone({ accept, extensions, multiple, onFile, onFiles }: Props) {
   const { t } = useLang();
+  const pending = usePending();
   const inputRef = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
   const counter = useRef(0);
+  const consumed = useRef(false);
 
   const pick = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     if (multiple && onFiles) onFiles(Array.from(files));
     else onFile?.(files[0]);
   };
+
+  // Підхоплення файлів, уже закинутих на головній. Рівно один раз на монтаж:
+  // consumed лишається після обробки, тож оновлення пропів не споживуть чергу вдруге.
+  useEffect(() => {
+    if (consumed.current || !pending || pending.files.length === 0) return;
+    const batch = pending.take(multiple && onFiles ? pending.files.length : 1);
+    if (batch.length === 0) return;
+    consumed.current = true;
+    if (multiple && onFiles) onFiles(batch);
+    else onFile?.(batch[0]);
+  }, [pending, multiple, onFile, onFiles]);
 
   return (
     <div
