@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { useLang } from '../i18n/lang';
 
 interface Props {
@@ -16,30 +15,12 @@ const PATH: Record<Tab, string> = { tools: '/', recent: '/recent', favorites: '/
 const LABEL: Record<Tab, string> = { tools: 'nav.tools', recent: 'nav.recent', favorites: 'nav.favs' };
 
 /**
- * Верхня панель: таби переходів + пошук інструментів з підказкою ⌘K.
+ * Верхня панель: таби переходів + пошук інструментів.
  * Пошук шукає за назвою, тегом, описом і розширеннями.
+ * Гаряча клавіша ⌘K прибрана за запитом — сам інпут лишився.
  */
 export default function TopBar({ active, query, onQuery }: Props) {
   const { t } = useLang();
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // ⌘K / Ctrl+K — фокус у пошук; Esc — очищення.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-        inputRef.current?.select();
-        return;
-      }
-      if (e.key === 'Escape' && document.activeElement === inputRef.current) {
-        onQuery('');
-        inputRef.current?.blur();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onQuery]);
 
   return (
     <header className="topbar">
@@ -62,14 +43,12 @@ export default function TopBar({ active, query, onQuery }: Props) {
           <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
         </svg>
         <input
-          ref={inputRef}
           type="search"
           value={query}
           placeholder={t('search.tools')}
           aria-label={t('search.tools')}
           onChange={(e) => onQuery(e.target.value)}
         />
-        <kbd aria-hidden="true">⌘K</kbd>
       </label>
     </header>
   );

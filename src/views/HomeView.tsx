@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
-import { IMAGE_TOOLS, visibleCategories, type ToolMeta } from '../config/catalog';
+import { useMemo, useRef } from 'react';
+import { IMAGE_TOOLS, matchesAccept, visibleCategories, type ToolMeta } from '../config/catalog';
 import { pluralTools } from '../i18n/dict';
 import { useLang } from '../i18n/lang';
-import { go, useHistory, type Route } from '../state/store';
+import type { Route } from '../state/store';
+import { usePending } from '../state/pending';
 import Stepper from '../components/Stepper';
 import ToolCard from '../components/ToolCard';
 import { formatBytes } from '../tools/images';
@@ -18,9 +19,21 @@ interface Props {
   onFav: (id: string) => void;
 }
 
-const POPULAR = 6;
+/** Скорочений формат для бейджа біля файлу: розширення, або частину MIME. */
+function fmtOf(f: File): string {
+  const dot = f.name.lastIndexOf('.');
+  if (dot > 0 && dot < f.name.length - 1) return f.name.slice(dot + 1).toLowerCase();
+  const semi = f.type.indexOf('/');
+  return semi > 0 ? f.type.slice(semi + 1) : '—';
+}
 
-/** Головна: hero + дропзона + степер + пошук + чипи + популярні + історія. */
+/**
+ * Головна сторінка: hero + дропзона + степер + пошук + чипи + інструменти.
+ *
+ * Логіка відповідно до Convertio: закинув файл(и) → ми показуємо саме ті
+ * інструменти, які вміють з ними працювати → клік → файл уже лежить у робочій
+ * зоні (черга передається через PendingCtx, див. state/pending.tsx).
+ */
 export default function HomeView({
   query,
   onQuery,
@@ -31,16 +44,22 @@ export default function HomeView({
   onFav,
 }: Props) {
   const { lang, t } = useLang();
-  const history = useHistory();
-  const [staged, setStaged] = useState<File[]>([]);
-  const [showAll, setShowAll] = useState(false);
+  const pending = usePending();
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const staged = pending?.files ?? [];
   const chips = visibleCategories();
 
-  const filtered = useMemo(() => {
+  /** Інструменти, що хоча б для одного закинутого файлу вміють щось зробити. */
+  const matched = useMemo(() => {
+    if (staged.length === 0) return null;
+    return IMAGE_TOOLS.filter((tool) => staged.some((f) => matchesAccept(tool.accept, f)));
+  }, [staged]);
+
+  const grid = useMemo(() => {
+    const source = matched ?? IMAGE_TOOLS;
     const q = query.trim().toLowerCase();
-    return IMAGE_TOOLS.filter((tool) => {
+    return source.filter((tool) => {
       if (category !== 'all' && tool.category !== category) return false;
       if (q) {
         const hay = `${t(`tool.${tool.id}.title`)} ${t(`tool.${tool.id}.tag`)} ${t(
@@ -50,14 +69,23 @@ export default function HomeView({
       }
       return true;
     });
-  }, [query, category, t]);
+  }, [matched, query, category, t]);
 
-  const grid = showAll || query.trim() ? filtered : filtered.slice(0, POPULAR);
-  const active = query.trim().length > 0 || showAll;
+  /** Заголовок: якщо кинули файли — підказуємо, що з ними зробити. */
+  const heading =
+    staged.length > 0 ? t('home.forFiles') : category !== 'all' ? t('sec.tools') : t('home.tools');
+
+  const emptyMsg = matched && matched.length === 0 ? t('home.noTool') : t('empty.search');
 
   const pick = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    setStaged(Array.from(files).slice(0, 20));
+    pending?.set(Array.from(files).slice(0, 20));
+  };
+
+  /** Передаємо в інструмент лише ті файли, які він справді вміє прийняти. */
+  const openTool = (tool: ToolMeta) => {
+    pending?.set(staged.filter((f) => matchesAccept(tool.accept, f)));
+    onOpenTool(tool);
   };
 
   return (
@@ -74,7 +102,7 @@ export default function HomeView({
       {/* --- дропзона --- */}
       <section className="dz-big-wrap">
         <div
-          className="dz-big"
+          className={`dz-big${staged.length > 0 ? ' has' : ''}`}
           role="button"
           tabIndex={0}
           aria-label={t('dz.big.title')}
@@ -100,12 +128,27 @@ export default function HomeView({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path
+                d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
             </svg>
           </span>
           <b>{t('dz.big.title')}</b>
           <span className="dz-big-sub">{t('dz.big.sub')}</span>
-          <span className="btn btn-primary dz-big-btn">{t('dz.big.cta')}</span>
+          <span className="btn btn-primary dz-big-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 5v14M5 12h14"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+            </svg>
+            {t('dz.big.cta')}
+          </span>
           <span className="dz-big-note">{t('dz.big.note')}</span>
 
           <input
@@ -122,18 +165,17 @@ export default function HomeView({
 
         {staged.length > 0 && (
           <div className="staged">
-            <span className="staged-count">
-              {t('home.staged', { n: staged.length })}
-            </span>
+            <span className="staged-count">{t('home.staged', { n: staged.length })}</span>
             <ul>
               {staged.map((f) => (
                 <li key={f.name + f.size}>
+                  <span className="staged-fmt">{fmtOf(f)}</span>
                   <span className="staged-name">{f.name}</span>
                   <span className="staged-size">{formatBytes(f.size, lang)}</span>
                 </li>
               ))}
             </ul>
-            <button type="button" className="linklike" onClick={() => setStaged([])}>
+            <button type="button" className="linklike" onClick={() => pending?.set([])}>
               {t('tool.clearList')}
             </button>
           </div>
@@ -159,7 +201,6 @@ export default function HomeView({
           aria-label={t('home.searchPh')}
           onChange={(e) => onQuery(e.target.value)}
         />
-        <kbd aria-hidden="true">⌘K</kbd>
       </label>
 
       {/* --- чипи категорій --- */}
@@ -189,29 +230,21 @@ export default function HomeView({
         </div>
       )}
 
-      {/* --- інструменти --- */}
+      {/* --- інструменти: всі, що належать типу; після скидання — ті, що вміють працювати з файлом --- */}
       <section className="block">
         <div className="block-head">
-          <h2>{active ? t('sec.tools') : t('home.popular')}</h2>
-          {!active && (
-            <button type="button" className="linkarrow" onClick={() => setShowAll(true)}>
-              {t('home.viewAll')}
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M5 12h14m0 0-5-5m5 5-5 5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          )}
+          <h2>{heading}</h2>
         </div>
 
         {grid.length === 0 ? (
-          <div className="empty">{t('empty.search')}</div>
+          <div className="empty">{emptyMsg}</div>
         ) : (
           <div className="tools-grid">
             {grid.map((tool) => (
               <ToolCard
                 key={tool.id}
                 tool={tool}
-                onOpen={() => onOpenTool(tool)}
+                onOpen={() => openTool(tool)}
                 fav={hasFav(tool.id)}
                 onFav={() => onFav(tool.id)}
               />
@@ -219,57 +252,6 @@ export default function HomeView({
           </div>
         )}
       </section>
-
-      {/* --- історія --- */}
-      <section className="block">
-        <div className="block-head">
-          <h2>{t('home.recent')}</h2>
-          <button type="button" className="linkarrow" onClick={() => go('/recent')}>
-            {t('home.viewHistory')}
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 12h14m0 0-5-5m5 5-5 5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-
-        {history.length === 0 ? (
-          <div className="empty">{t('hist.empty')}</div>
-        ) : (
-          <div className="hist">
-            {history.slice(0, 5).map((h) => (
-              <div className="hist-row" key={h.key}>
-                <span className="hist-ico" aria-hidden="true">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                    <path d="M6 3h8l4 4v14H6z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                    <path d="M14 3v4h4" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="hist-name">{h.name}</span>
-                <span className="hist-op">
-                  {h.tool ? t(`tool.${h.tool}.title`) : t('hist.unknown')}
-                </span>
-                <span className="hist-size">{formatBytes(h.size, lang)}</span>
-                <span className="hist-when">{relTime(h.ts, t)}</span>
-                <span className="hist-state">{t('hist.done')}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
-}
-
-/** «Щойно» / «Сьогодні, 14:03» / «3 жовтня, 14:03» — без бібліотек дат. */
-export function relTime(
-  ts: number,
-  t: (k: string, v?: Record<string, string | number>) => string,
-): string {
-  const d = new Date(ts);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  if (sameDay) return t('hist.today', { time });
-  const day = `${d.getDate()} ${t(`month.${d.getMonth() + 1}`)}`;
-  return t('hist.onDate', { day, time });
 }

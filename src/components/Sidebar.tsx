@@ -88,27 +88,6 @@ export default function Sidebar({ active, category, onCategory, onNavigate }: Pr
       )}
 
       <div className="side-foot">
-        <div className="side-tip">
-          <span className="side-tip-ico" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.2.9 1.9v.3h5.4v-.3c0-.7.3-1.4.9-1.9A6 6 0 0 0 12 3Z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <b>{t('side.tip.title')}</b>
-          <span>{t('side.tip.text')}</span>
-        </div>
-
-        <a className="side-help" href="#about" onClick={() => onNavigate('/')}>
-          <IcoHelp />
-          {t('side.help')}
-        </a>
-
         <div className="side-meta">
           <span>UltraToolkit v2.0</span>
           <div className="lang-switch" role="group" aria-label="Мова / Language">
@@ -164,21 +143,6 @@ function IcoStar() {
         strokeWidth="1.6"
         strokeLinejoin="round"
       />
-    </svg>
-  );
-}
-
-function IcoHelp() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
-      <path
-        d="M9.6 9.2a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <circle cx="12" cy="16.6" r="1" fill="currentColor" />
     </svg>
   );
 }

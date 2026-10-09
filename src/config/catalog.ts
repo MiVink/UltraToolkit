@@ -64,6 +64,32 @@ export function getTool(id: string): ToolMeta | undefined {
   return IMAGE_TOOLS.find((t) => t.id === id);
 }
 
+/**
+ * Чи прийме інструмент саме цей файл.
+ *
+ * `accept` зберігає і MIME, і розширення (див. RASTER вище), бо частина файлів
+ * приходить із порожнім file.type — тоді рятує лише розширення.
+ * Ця функція — серце «кинув файл → ось що з ним можна зробити».
+ */
+export function matchesAccept(accept: string, file: File): boolean {
+  const name = file.name.toLowerCase();
+  const type = file.type;
+  return accept
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .some((p) => {
+      if (p.startsWith('.')) return name.endsWith(p);
+      if (p.endsWith('/*')) return !!type && type.startsWith(p.slice(0, -1));
+      return !!type && type === p;
+    });
+}
+
+/** Усі інструменти, що вміють працювати з файлом — показуємо їх одразу після скидання. */
+export function toolsForFile(file: File): ToolMeta[] {
+  return IMAGE_TOOLS.filter((t) => matchesAccept(t.accept, file));
+}
+
 /** Чи це растрове фото (jpeg/png/webp) — для convert/resize/rotate/… */
 export function isRasterFile(f: File): boolean {
   const name = f.name.toLowerCase();

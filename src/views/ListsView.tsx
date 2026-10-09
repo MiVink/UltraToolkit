@@ -4,7 +4,7 @@ import ToolCard from '../components/ToolCard';
 import { clearHistory } from '../state/history';
 import { useHistory } from '../state/store';
 import { formatBytes } from '../tools/images';
-import { relTime } from './HomeView';
+import { relTime } from '../i18n/time';
 
 /** Сторінка «Нещодавнє»: повна історія завантажень. */
 export function RecentView() {

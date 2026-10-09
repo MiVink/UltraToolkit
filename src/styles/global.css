@@ -216,8 +216,10 @@ a { color: inherit; }
 .lang-switch button.on { background: rgba(119,117,246,0.14); color: var(--neon-bright); }
 
 /* --- hero --- */
+/* Старий hero-секція з попереднього макета: її padding досі діставався нового
+   `.hero` і додавав 88px повітря під топбаром — прибрано. */
 .hero {
-  padding: 88px 0 34px;
+  padding: 0;
   position: relative;
 }
 .hero-eyebrow {
@@ -249,7 +251,7 @@ a { color: inherit; }
   text-shadow: 0 0 26px rgba(119, 117, 246, 0.6), 0 0 72px rgba(119, 117, 246, 0.28);
 }
 .hero p {
-  max-width: 640px;
+  max-width: none; /* було 640px від старого макета — обмежувало підзаголовок */
   color: var(--muted);
   font-size: clamp(15px, 2vw, 18px);
   line-height: 1.6;
@@ -271,13 +273,13 @@ a { color: inherit; }
   transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
 }
 .btn-primary {
-  background: linear-gradient(180deg, #9695f8, #5d5be8);
-  color: #0c0e13;
-  box-shadow: 0 0 30px rgba(119, 117, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, #8b89f8, #6462ee);
+  color: #ffffff;
+  box-shadow: 0 6px 22px rgba(119, 117, 246, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 34px rgba(119, 117, 246, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(119, 117, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.36);
 }
 .btn-ghost {
   background: rgba(255, 255, 255, 0.045);
@@ -419,8 +421,8 @@ a { color: inherit; }
 /* --- tools --- */
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 /* обгортка тягнеться по висоті рядка, тож картки в рядку рівні */
 .tools-grid > div { display: flex; }
@@ -844,7 +846,7 @@ footer::before {
 
 @media (max-width: 960px) {
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
-  .tools-grid { grid-template-columns: 1fr; }
+  .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .about { padding: 20px; }
 }
 @media (max-width: 600px) {
@@ -882,7 +884,7 @@ footer::before {
   min-height: 100vh;
 }
 .app-main { display: flex; flex-direction: column; min-width: 0; }
-.content { width: 100%; max-width: 1180px; margin: 0 auto; padding: 26px 30px 70px; }
+.content { width: 100%; max-width: 1640px; margin: 0 auto; padding: 18px 34px 72px; }
 
 /* --- сайдбар --- */
 .sidebar {
@@ -987,7 +989,7 @@ footer::before {
   font-family: var(--font-mono); font-size: 11px; color: var(--muted-2);
   border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px;
 }
-.bigsearch { height: 48px; padding: 0 15px; }
+.bigsearch { height: 48px; padding: 0 15px; margin-top: 18px; }
 .bigsearch input { font-size: 14.5px; }
 
 /* ============================================================ ГОЛОВНА */
@@ -1000,15 +1002,17 @@ footer::before {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-pill);
 }
 
-.dz-big-wrap { display: grid; gap: 14px; margin-top: 22px; }
+.dz-big-wrap { display: grid; gap: 14px; margin-top: 18px; }
 .dz-big {
   display: grid; justify-items: center; gap: 5px; text-align: center;
-  padding: 32px 22px; cursor: pointer;
+  padding: 26px 22px; cursor: pointer;
   border: 1.5px dashed var(--line-strong); border-radius: var(--r-lg);
   background: rgba(255, 255, 255, 0.014);
   transition: border-color 0.18s, background 0.18s;
 }
 .dz-big:hover, .dz-big:focus-visible { border-color: var(--neon); background: rgba(119, 117, 246, 0.06); }
+/* файли вже закинуті — дропзона переходить у стан «чекаю на наступні» */
+.dz-big.has { border-color: rgba(119, 117, 246, 0.45); background: rgba(119, 117, 246, 0.045); }
 .dz-big-ico {
   width: 46px; height: 46px; margin-bottom: 5px; border-radius: 50%;
   display: grid; place-items: center;
@@ -1019,10 +1023,49 @@ footer::before {
 .dz-big-btn { margin-top: 9px; pointer-events: none; }
 .dz-big-note { margin-top: 7px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-2); }
 
+/* --- повноекранний стан перетягування --- */
+/* pointer-events: none — заважати подіям не має: drop лягає на елемент під курсором */
+.drop-veil {
+  position: fixed; inset: 0; z-index: 200;
+  display: grid; place-items: center;
+  pointer-events: none;
+  background: rgba(8, 9, 14, 0.58);
+  backdrop-filter: blur(3px);
+  animation: veil-in 0.14s ease-out;
+}
+.drop-veil-box {
+  display: grid; justify-items: center; gap: 9px; text-align: center;
+  padding: 32px 44px; max-width: min(560px, calc(100vw - 48px));
+  background: var(--panel); border: 2px dashed var(--accent);
+  border-radius: 18px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+}
+.drop-veil-ico {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accent-tint); color: var(--accent);
+}
+.drop-veil-box b { font-size: 17px; font-weight: 650; color: var(--text); letter-spacing: -0.015em; }
+.drop-veil-box > span:last-child { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+@keyframes veil-in { from { opacity: 0 } to { opacity: 1 } }
+
 .staged { display: grid; gap: 8px; padding: 13px 15px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); }
 .staged-count { font-size: 12.5px; color: var(--muted); }
 .staged ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 168px; overflow-y: auto; }
-.staged li { display: flex; align-items: baseline; gap: 12px; font-size: 13px; }
+.staged li { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+/* бейдж формату — так виглядає підказка «з чим саме працюємо», як у Convertio */
+.staged-fmt {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-tint);
+  border: 1px solid rgba(119, 117, 246, 0.34);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
 .staged-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .staged-size { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-2); }
 
@@ -1205,8 +1248,8 @@ footer::before {
 }
 @media (max-width: 720px) {
   .hero { flex-direction: column; gap: 12px; }
+  .tools-grid { grid-template-columns: 1fr; }
   .topsearch { width: auto; flex: 1; }
-  .topsearch kbd { display: none; }
   .hist-row { grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; }
   .hist-op, .hist-when, .hist-head { display: none; }
   .hist-size { justify-self: end; }
