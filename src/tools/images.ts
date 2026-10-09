@@ -1,3 +1,5 @@
+import { recordDownload } from '../state/history';
+
 /* Локальна обробка зображень: Canvas API, жодних мережевих запитів.
    Помилки — кодовані (ERR:<code>), текст підставляє UI через i18n. */
 
@@ -447,10 +449,13 @@ export async function cropImage(file: File, r: CropRect): Promise<ProcessResult>
 }
 
 export function downloadBlob(blob: Blob, fileName: string): void {
+  const safe = safeFileName(fileName);
+  // Єдина точка, куди сходяться всі конверсії — сюди й пишемо історію.
+  recordDownload(safe, blob.size);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = safeFileName(fileName);
+  a.download = safe;
   document.body.appendChild(a);
   a.click();
   a.remove();

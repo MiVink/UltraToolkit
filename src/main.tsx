@@ -6,10 +6,8 @@ import '@fontsource/inter/400.css';
 import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
-import '@fontsource/unbounded/400.css';
-import '@fontsource/unbounded/500.css';
-import '@fontsource/unbounded/600.css';
-import '@fontsource/unbounded/700.css';
+// Unbounded прибрано: макет в2 не має «дизайнерського» заголовкового шрифту,
+// інтерфейс повністю на Inter — 4 зайві ваги більше не летять користувачу.
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import App from './App';

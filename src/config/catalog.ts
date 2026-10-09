@@ -16,6 +16,8 @@ export interface ToolMeta {
   /** людиночитабельні розширення */
   extensions: string;
   maxSizeMB?: number;
+  /** у якій категорії показувати інструмент — керує чипами й сайдбаром */
+  category: CategoryMeta['id'];
 }
 
 export interface CategoryMeta {
@@ -37,19 +39,22 @@ export function visibleCategories(): CategoryMeta[] {
 
 const RASTER = 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
 
+/** Поки всі інструменти — зображення. Нові категорії додають свій рядок. */
+const IMG = { category: 'image' as const };
+
 /** Усі підписи — у словнику i18n (tool.<id>.*). Жодних «хітів» і хайпу: людьми для людей. */
 export const IMAGE_TOOLS: ToolMeta[] = [
-  { id: 'png-to-jpg', accept: 'image/png,.png', extensions: '.png', maxSizeMB: 30 },
-  { id: 'jpg-to-png', accept: 'image/jpeg,.jpg,.jpeg', extensions: '.jpg, .jpeg', maxSizeMB: 30 },
-  { id: 'svg-to-png', accept: 'image/svg+xml,.svg', extensions: '.svg', maxSizeMB: 10 },
-  { id: 'compress', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'resize', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'rotate', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'metadata', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'crop', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'webp', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'batch', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
-  { id: 'favicon', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30 },
+  { id: 'png-to-jpg', accept: 'image/png,.png', extensions: '.png', maxSizeMB: 30, ...IMG },
+  { id: 'jpg-to-png', accept: 'image/jpeg,.jpg,.jpeg', extensions: '.jpg, .jpeg', maxSizeMB: 30, ...IMG },
+  { id: 'svg-to-png', accept: 'image/svg+xml,.svg', extensions: '.svg', maxSizeMB: 10, ...IMG },
+  { id: 'compress', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'resize', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'rotate', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'metadata', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'crop', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'webp', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'batch', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
+  { id: 'favicon', accept: RASTER, extensions: '.jpg, .png, .webp', maxSizeMB: 30, ...IMG },
 ];
 
 /** Чесно наступне (після реалізації поточного набору). Максимум 3 пункти. */

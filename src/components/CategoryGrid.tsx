@@ -2,7 +2,7 @@ import type { CategoryMeta } from '../config/catalog';
 import { useLang } from '../i18n/lang';
 import { IMAGE_TOOLS } from '../config/catalog';
 
-function Icon({ kind }: { kind: CategoryMeta['icon'] }) {
+export function CategoryIcon({ kind }: { kind: CategoryMeta['icon'] }) {
   const common = {
     width: 20,
     height: 20,
@@ -86,7 +86,7 @@ export default function CategoryGrid({
           >
             {soon && <span className="soon-veil">{t('soon')}</span>}
             <span className="cat-icon" aria-hidden="true">
-              <Icon kind={c.icon} />
+              <CategoryIcon kind={c.icon} />
             </span>
             <h3>{t(`cat.${c.id}.name`)}</h3>
             <p>{t(`cat.${c.id}.desc`)}</p>

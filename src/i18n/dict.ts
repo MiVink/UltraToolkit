@@ -165,6 +165,84 @@ const uk = {
 
   'foot.lock': 'Файли обробляються лише у вашому браузері',
   'foot.right': 'Ultra-Toolkit · {year} · MIT',
+
+  /* --- оболонка: сайдбар і топбар --- */
+  'nav.all': 'Усі інструменти',
+  'nav.recent': 'Нещодавнє',
+  'nav.favs': 'Обране',
+  'side.cats': 'КАТЕГОРІЇ',
+  'side.tip.title': 'Менше кроків. Більше користі.',
+  'side.tip.text': 'Додавайте файли та конвертуйте одним клацанням.',
+  'side.help': 'Допомога та зворотний звʼязок',
+  'search.tools': 'Пошук інструментів',
+
+  /* --- головна --- */
+  'home.title': 'Ваші файли. Потрібний формат.',
+  'home.sub': 'Конвертуйте, стискайте та сортуйте — все в одному місці.',
+  'home.popular': 'Популярні інструменти',
+  'home.viewAll': 'Переглянути всі',
+  'home.recent': 'Нещодавні файли',
+  'home.viewHistory': 'Історія',
+  'home.searchPh': 'Знайти інструмент: наприклад, «стиснення PDF»',
+  'home.staged': 'Вибрано {n}',
+
+  'dz.big.title': 'Перетягніть файли сюди',
+  'dz.big.sub': 'або оберіть їх на своєму пристрої',
+  'dz.big.cta': 'Додати файли',
+  'dz.big.note': 'JPG, PNG, WEBP та інші · до 20 файлів за раз',
+
+  'step.add': 'Додати файли',
+  'step.format': 'Обрати формат',
+  'step.convert': 'Конвертувати',
+  'step.hint': 'Формат обирається на наступному кроці',
+  'chip.all': 'Усі',
+
+  /* --- сторінка інструмента --- */
+  'crumb.nav': 'Навігація по сторінці',
+  'tool.quick': 'Швидкий режим',
+  'tool.favAdd': 'В обране',
+  'tool.favRemove': 'Прибрати з обраного',
+  'tool.stepOf': 'Крок {n} із 3',
+  'tool.about': 'Про інструмент',
+  'tool.formats': 'Формати',
+  'tool.limit': 'Ліміт файлу',
+  'tool.limitMb': '{n} МБ',
+  'tool.privacy': 'Приватність',
+  'tool.privacyText': 'Файли обробляються лише у вашому браузері й нікуди не надсилаються.',
+  'tool.clearList': 'Очистити список',
+  'tool.notFound': 'Такого інструмента немає',
+  'tool.notFoundSub': 'Можливо, його перейменували. Поверніться до списку.',
+
+  /* --- списки --- */
+  'recent.sub': 'Файли, які ви обробляли нещодавно.',
+  'favs.sub': 'Інструменти, які ви додали в обране.',
+  'favs.empty': 'Обране поки порожнє. Натисніть ★ на картці інструмента.',
+
+  /* --- історія --- */
+  'hist.empty': 'Поки порожньо. Файли зʼявляться тут після обробки.',
+  'hist.done': 'Готово',
+  'hist.clear': 'Очистити історію',
+  'hist.today': 'Сьогодні, {time}',
+  'hist.onDate': '{day}, {time}',
+  'hist.unknown': 'Обробка',
+  'hist.col.file': 'Файл',
+  'hist.col.op': 'Операція',
+  'hist.col.size': 'Розмір',
+  'hist.col.when': 'Коли',
+  'hist.col.state': 'Стан',
+
+  'month.1': 'січня',
+  'month.2': 'лютого',
+  'month.3': 'березня',
+  'month.4': 'квітня',
+  'month.5': 'травня',
+  'month.6': 'червня',
+  'month.7': 'липня',
+  'month.8': 'серпня',
+  'month.9': 'вересня',
+  'month.10': 'жовтня',
+  'month.11': 'листопада',
+  'month.12': 'грудня',
 };
 
 export type Key = keyof typeof uk;
@@ -334,9 +412,103 @@ const en: Record<Key, string> = {
 
   'foot.lock': 'Files are processed only in your browser',
   'foot.right': 'Ultra-Toolkit · {year} · MIT',
+
+  /* --- shell: sidebar and topbar --- */
+  'nav.all': 'All tools',
+  'nav.recent': 'Recent',
+  'nav.favs': 'Favorites',
+  'side.cats': 'CATEGORIES',
+  'side.tip.title': 'Fewer steps. More done.',
+  'side.tip.text': 'Add files and convert them with one click.',
+  'side.help': 'Help & feedback',
+  'search.tools': 'Search tools',
+
+  /* --- home --- */
+  'home.title': 'Your files. The format you need.',
+  'home.sub': 'Convert, compress, and organize — all in one place.',
+  'home.popular': 'Popular tools',
+  'home.viewAll': 'View all',
+  'home.recent': 'Recent files',
+  'home.viewHistory': 'View history',
+  'home.searchPh': 'Find a tool: for example, «compress PDF»',
+  'home.staged': '{n} selected',
+
+  'dz.big.title': 'Drag and drop files here',
+  'dz.big.sub': 'or select them from your device',
+  'dz.big.cta': 'Select files',
+  'dz.big.note': 'JPG, PNG, WEBP, and more · Up to 20 files at a time',
+
+  'step.add': 'Add files',
+  'step.format': 'Choose format',
+  'step.convert': 'Convert',
+  'step.hint': 'Choose the format on the next step',
+  'chip.all': 'All',
+
+  /* --- tool page --- */
+  'crumb.nav': 'Page navigation',
+  'tool.quick': 'Quick mode',
+  'tool.favAdd': 'Add to favorites',
+  'tool.favRemove': 'Remove from favorites',
+  'tool.stepOf': 'Step {n} of 3',
+  'tool.about': 'About this tool',
+  'tool.formats': 'Formats',
+  'tool.limit': 'File limit',
+  'tool.limitMb': '{n} MB',
+  'tool.privacy': 'Privacy',
+  'tool.privacyText': 'Files are processed only in your browser and never uploaded.',
+  'tool.clearList': 'Clear list',
+  'tool.notFound': 'This tool does not exist',
+  'tool.notFoundSub': 'It may have been renamed. Head back to the list.',
+
+  /* --- lists --- */
+  'recent.sub': 'Files you processed recently.',
+  'favs.sub': 'Tools you marked as favorites.',
+  'favs.empty': 'No favorites yet. Hit ★ on a tool card.',
+
+  /* --- history --- */
+  'hist.empty': 'Nothing here yet. Files appear here after processing.',
+  'hist.done': 'Done',
+  'hist.clear': 'Clear history',
+  'hist.today': 'Today, {time}',
+  'hist.onDate': '{day}, {time}',
+  'hist.unknown': 'Processing',
+  'hist.col.file': 'File',
+  'hist.col.op': 'Operation',
+  'hist.col.size': 'Size',
+  'hist.col.when': 'When',
+  'hist.col.state': 'Status',
+
+  'month.1': 'Jan',
+  'month.2': 'Feb',
+  'month.3': 'Mar',
+  'month.4': 'Apr',
+  'month.5': 'May',
+  'month.6': 'Jun',
+  'month.7': 'Jul',
+  'month.8': 'Aug',
+  'month.9': 'Sep',
+  'month.10': 'Oct',
+  'month.11': 'Nov',
+  'month.12': 'Dec',
 };
 
 export const STRINGS: Record<Lang, Record<string, string>> = { uk, en };
+
+/** Число + правильно відмінене слово «інструмент» для бейджа «24 інструменти». */
+export function pluralTools(n: number, lang: Lang): string {
+  if (lang !== 'uk') {
+    return lang === 'en' ? `${n} ${n === 1 ? 'tool' : 'tools'}` : `${n} tools`;
+  }
+  const m10 = n % 10;
+  const m100 = n % 100;
+  const word =
+    m10 === 1 && m100 !== 11
+      ? 'інструмент'
+      : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)
+        ? 'інструменти'
+        : 'інструментів';
+  return `${n} ${word}`;
+}
 
 export function translate(lang: Lang, key: string, vars?: Record<string, string | number>): string {
   const table: Record<string, string> = STRINGS[lang] ?? STRINGS.uk;
